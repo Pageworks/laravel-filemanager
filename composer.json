@@ -1,0 +1,42 @@
+{
+    "name": "pageworks/laravel-filemanager",
+    "description": "A file-manager supporting TUS uploads",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Nick Pattison",
+            "email": "pattison.nick@gmail.com"
+        }
+    ],
+    "homepage": "https://github.com/pageworks/laravel-filemanager",
+    "keywords": ["Laravel", "LaravelFileManager"],
+    "require": {
+        "php":"^8",
+        "illuminate/support": "~9",
+        "ankitpokhrel/tus-php": "^2.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~9.0",
+        "orchestra/testbench": "~7"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pageworks\\LaravelFileManager\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Pageworks\\LaravelFileManager\\Tests\\": "tests"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Pageworks\\LaravelFileManager\\LaravelFileManagerServiceProvider"
+            ],
+            "aliases": {
+                "LaravelFileManager": "Pageworks\\LaravelFileManager\\Facades\\LaravelFileManager"
+            }
+        }
+    }
+}
