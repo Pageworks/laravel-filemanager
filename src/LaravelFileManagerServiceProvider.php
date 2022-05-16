@@ -4,33 +4,27 @@ namespace Pageworks\LaravelFileManager;
 
 use Illuminate\Support\ServiceProvider;
 use TusPhp\Tus\Server as TusServer;
+use TusPhp\Events\TusEvent;
+
+use Pageworks\LaravelFileManager\Events\TusUploadStart;
+use Pageworks\LaravelFileManager\Events\TusUploadProgress;
+use Pageworks\LaravelFileManager\Events\TusUploadMerged;
+use Pageworks\LaravelFileManager\Events\TusUploadComplete;
 
 class LaravelFileManagerServiceProvider extends ServiceProvider
 {
-    /**
-     * Perform post-registration booting of services.
-     *
-     * @return void
-     */
     public function boot(): void
     {
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'pageworks');
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'pageworks');
-        // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'laravel-filemanager');
         $this->loadRoutesFrom(__DIR__.'/routes.php');
 
-        // Publishing is only necessary when using the CLI.
         if ($this->app->runningInConsole()) {
             $this->bootForConsole();
         }
     }
-
-    /**
-     * Register any package services.
-     *
-     * @return void
-     */
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/laravel-filemanager.php', 'laravel-filemanager');
@@ -44,16 +38,20 @@ class LaravelFileManagerServiceProvider extends ServiceProvider
             ]
         ]);
 
-        // Register the service the package provides.
         $this->app->singleton('laravel-filemanager', function ($app) {
             return new LaravelFileManager;
         });
 
         $this->app->singleton('tus-server', function ($app) {
-
-            $server = new TusServer('redis');
+            
+            $server = new TusServer('file');
             $server->setApiPath('/tus'); // tus server endpoint.
             $server->setUploadDir(storage_path('app/public'));
+
+            $server->event()->addListener('tus-server.upload.created', function(TusEvent $e){ event(new TusUploadStart($e)); });
+            $server->event()->addListener('tus-server.upload.progress', function(TusEvent $e){ event(new TusUploadProgress($e)); });
+            $server->event()->addListener('tus-server.upload.complete', function(TusEvent $e){ event(new TusUploadComplete($e)); });
+            $server->event()->addListener('tus-server.upload.merged', function(TusEvent $e){ event(new TusUploadMerged($e)); });
 
             return $server;
         });
