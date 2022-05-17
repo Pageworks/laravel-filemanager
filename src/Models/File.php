@@ -9,6 +9,13 @@ class File extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'file_name',
+        'file_path',
+        'dir_path',
+        'size',
+    ];
+
     // what factory class to use
     protected static function newFactory(){
         return \Pageworks\LaravelFileManager\Database\Factories\FileFactory::new();

@@ -19,6 +19,10 @@
             }
         </style>
         <style>
+            .clear {
+                clear:both;
+                display:block;
+            }
             .box-browse {
                 border-radius:5px;
                 border:solid #ccc 1px;
@@ -48,6 +52,8 @@
                 text-decoration:none;
                 border:1px solid rgba(0,0,0,.25);
                 float:right;
+                white-space: nowrap;
+                margin:0 0 0 5px;
             }
             ul span.size {
                 float:right;
@@ -69,8 +75,19 @@
                 border-top:1px solid #ccc;
                 padding:10px 20px;
                 margin:0;
+                clear:both;
+                display:flex;
             }
-            ul.list-dirs li a:hover, ul.list-files li a:not(.bttn):hover {
+            a.label {
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
+            }
+            li.file a.label {
+                padding:0;
+                flex-grow: 1;
+            }
+            a.label:hover {
                 color:#3333BB;
                 text-decoration: underline;
             }
@@ -88,27 +105,31 @@
             @if ($list)
             <hgroup>
             <button class='UppyModalOpenerBtn'>Upload</button>
-            <h1>Showing {{$path->getPathRelative()}}/</ h1>
+            <h1>{{$path->getPathRelative()}}/</ h1>
             <h2>{{$path->getPathAbsolute()}}/</h2>
             </hgroup>
 
             <ul class='list-dirs'>
             @foreach ($list['dirs'] as $dir)
-                <li><a href='/files?path={{ $dir['path'] }}'>{{ $dir['name'] }}</a></li>
+                <li><a href='/files?path={{ $dir['path'] }}' class='label'>{{ $dir['name'] }}</a></li>
             @endforeach
             </ul>
 
             <ul class='list-files'>
             @foreach($list['files'] as $file)
-                <li>
+                <li class='file'>
                     @if ($file['file_id'] > 0)
-                    <a href='/download?id={{ $file['file_id'] }}'>{{ $file['name'] }}</a>
-                    <a href='/files/remove?id={{ $file['file_id'] }}' class='bttn'>Remove from DB</a>
-                    @else
-                    <a href='/download?path={{ $file['path'] }}'>{{ $file['name'] }}</a>
-                    <a href='/files/add?path={{ $file['path'] }}' class='bttn'>Add to DB</a>
-                    @endif
+                    <a href='/files/download?id={{ $file['file_id'] }}' class='label'>{{ $file['name'] }}</a>
                     <span class='size'>{{ $file['size'] }}</span>
+                    <a href='/files/remove?id={{ $file['file_id'] }}' class='bttn'>Remove from DB</a>
+                    <a href='/files/delete?id={{ $file['file_id'] }}' class='bttn'>Delete</a>
+                    @else
+                    <a href='/files/download?path={{ $file['path'] }}' class='label'>{{ $file['name'] }}</a>
+                    <span class='size'>{{ $file['size'] }}</span>
+                    <a href='/files/add?path={{ $file['path'] }}' class='bttn'>Add to DB</a>
+                    <a href='/files/delete?path={{ $file['path'] }}' class='bttn'>Delete</a>
+                    @endif
+                    <span class='clear'></span>
                 </li>
             @endforeach
             </ul>
@@ -153,7 +174,7 @@
                     maxFileSize: 1000000 // ~10MB
                 }
             }).use(Uppy.Tus, {
-                endpoint: 'http://localhost:8000/tus',
+                endpoint: 'http://localhost:8000/files/tus',
                 chunkSize: 10000000 // ~10MB
             });
             //UppyModalOpenerBtn.on

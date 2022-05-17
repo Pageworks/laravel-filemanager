@@ -5,6 +5,7 @@ namespace Pageworks\LaravelFileManager;
 use Pageworks\LaravelFileManager\Models\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class FilePath
 {
@@ -17,16 +18,23 @@ class FilePath
 
     public function __construct(string|Request $request = '.')
     {
-
-        if(is_string($request)) $request_path = $request;
-        if($id = $request->input('id')){
+        if(is_string($request)) {
+            $request_path = $request;
+        }
+        else if($id = $request->input('id')){
             $file = File::find($id);
             $request_path = $file->file_path ?? '.';
         }
         else $request_path = $request->input('path') ?? '.';
 
         $this->path_root = storage_path("app/public");
-        $this->path_abs = realpath($this->path_root.DIRECTORY_SEPARATOR.$request_path);
+        
+        if(strpos($request_path, $this->path_root) === 0){
+            $this->path_abs = realpath($request_path);
+        } else {
+            $this->path_abs = realpath($this->path_root.DIRECTORY_SEPARATOR.$request_path);
+        }
+        
         $this->path_rel = str_replace($this->path_root, '', $this->path_abs);
     }
     public function getListFiles(){
@@ -74,6 +82,11 @@ class FilePath
             'files' => $files,
         ];
     }
+    public function getSize(){
+        $sizeBytes = Storage::size('public/'.$this->path_rel);
+        //$sizeFormatted = $this->formatSize($sizeBytes);
+        return $sizeBytes;
+    }
     public function getPathRelative(){
         return $this->path_rel;
     }
@@ -94,6 +107,24 @@ class FilePath
     }
     public function getDir(){
         return preg_replace('/\/[^\/]+$/', '', $this->path_rel);
+    }
+    public function getFileName(){
+        return preg_replace('/\/([^\/]+)$/', '$1', $this->path_rel);
+    }
+    public function addToDB(){
+        
+        if(!$this->isFile()) return null;
+        
+        return \Pageworks\LaravelFileManager\Models\File::create([
+            'file_name' => $this->getFileName(),
+            'file_path' => $this->getPathRelative(),
+            'dir_path' => $this->getDir(),
+            'size' => $this->getSize(),
+        ]);
+    }
+    public function delete(){
+        if(!$this->isFile()) return;
+        unlink($this->path_abs);
     }
     protected function formatSize($size){
 

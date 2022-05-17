@@ -45,7 +45,8 @@ class LaravelFileManagerServiceProvider extends ServiceProvider
         $this->app->singleton('tus-server', function ($app) {
             
             $server = new TusServer('file');
-            $server->setApiPath('/tus'); // tus server endpoint.
+            
+            $server->setApiPath('/files/tus'); // tus server endpoint.
             $server->setUploadDir(storage_path('app/public'));
 
             $server->event()->addListener('tus-server.upload.created', function(TusEvent $e){ event(new TusUploadStart($e)); });

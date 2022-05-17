@@ -12,14 +12,14 @@ use Pageworks\LaravelFileManager\Http\Controllers\FileManageController;
 // file browsing:
 
 Route::get('/files', [FileManageController::class, 'browse']);
-Route::get('/download', [FileManageController::class, 'download']);
+Route::get('/files/download', [FileManageController::class, 'download']);
 Route::get('/files/add', [FileManageController::class, 'add']);
 Route::get('/files/remove', [FileManageController::class, 'remove']);
+Route::get('/files/delete', [FileManageController::class, 'delete']);
 
 // tus & uploads:
 
-Route::view('/upload','laravel-filemanager::upload')->name('files.upload.large');
-Route::get('/uploads', function(){
+Route::get('/files/uploads', function(){
     $cache = app('tus-server')->getCache();
     $keys = $cache->keys();
 
@@ -44,7 +44,7 @@ Route::get('/uploads', function(){
     }
 });
 
-Route::get('/uploads/del/{id}', function(Request $request, $id){
+Route::get('/files/uploads/del/{id}', function(Request $request, $id){
     $cache = app('tus-server')->getCache();
     
     $fileMeta = $cache->get($id);
@@ -60,5 +60,5 @@ Route::get('/uploads/del/{id}', function(Request $request, $id){
     return redirect('/files');
 });
 
-Route::match(['post','put','patch','delete'], "/tus/{key?}", [UploadController::class, 'upload']);
-Route::get("/tus/{key}", [UploadController::class, 'download']);
+Route::match(['post','put','patch','delete'], "/files/tus/{key?}", [UploadController::class, 'upload']);
+Route::get("/files/tus/{key}", [UploadController::class, 'download']);

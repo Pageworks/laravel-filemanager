@@ -23,7 +23,7 @@ class FileManageController extends BaseController {
                 'list' => $list,
                 'path' => $path,
             ]);
-        }  
+        }
     }
     // downloads a file
     public function download(Request $request){
@@ -40,10 +40,7 @@ class FileManageController extends BaseController {
         $path = new FilePath($request);
         if($path->isFile()){
 
-            $file = File::factory()->create([
-                'file_path' => $path->getPathRelative(),
-                'dir_path' => $path->getDir(),
-            ]);
+            $file = $path->addToDB();
 
             return redirect('/files?path='.$file->dir_path);
         } else {
@@ -61,6 +58,17 @@ class FileManageController extends BaseController {
             $file->delete();
 
             return redirect('/files?path='.$redirect);
+        } else {
+            return response(['error' => 'file not found'], 404);
+        }
+    }
+    public function delete(Request $request){
+        $path = new FilePath($request);
+        if($path->isFile()){
+
+            $path->delete();
+
+            return redirect('/files?path='.$path->getDir());
         } else {
             return response(['error' => 'file not found'], 404);
         }

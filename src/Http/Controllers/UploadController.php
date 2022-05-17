@@ -13,11 +13,10 @@ class UploadController extends BaseController {
     {
         //$this->middleware('auth');
     }
-    public function upload(Request $request, $key = ''){
-        (new ConsoleOutput())->writeln("/tus endpoint hit with KEY {$key} w/ {$request->method()}");
+    public function upload(){
         app('tus-server')->serve()->send();
     }
-    public function download(Request $request, $key){
+    public function download(){
         return app('tus-server')->serve()->send();
     }
 }

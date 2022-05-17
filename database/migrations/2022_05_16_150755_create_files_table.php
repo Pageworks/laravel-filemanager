@@ -15,11 +15,15 @@ return new class extends Migration
     {
         Schema::create('files', function (Blueprint $table) {
             $table->id();
+            $table->string('file_name', 255);
             $table->string('file_path', 255)->unique();
             $table->string('dir_path', 255);
+            $table->bigInteger('size');
+            $table->timestamps();
+
+            // allow ownership
             $table->unsignedBigInteger('owner_id')->nullable()->default(NULL);
             $table->string('owner_type')->nullable()->default(NULL);
-            $table->timestamps();
         });
     }
 
