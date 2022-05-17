@@ -4,6 +4,7 @@ namespace Pageworks\LaravelFileManager;
 
 use Pageworks\LaravelFileManager\Models\File;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class FilePath
 {
@@ -14,10 +15,14 @@ class FilePath
     protected $ignoredFiles = ['.DS_Store','.gitignore'];
     protected $ignoredDirs = ['.'];
 
-    public function __construct(string|Request $request)
+    public function __construct(string|Request $request = '.')
     {
 
         if(is_string($request)) $request_path = $request;
+        if($id = $request->input('id')){
+            $file = File::find($id);
+            $request_path = $file->file_path ?? '.';
+        }
         else $request_path = $request->input('path') ?? '.';
 
         $this->path_root = storage_path("app/public");
@@ -33,6 +38,8 @@ class FilePath
 
         // search db for files:
         $files_in_db = File::where('dir_path','=',$this->path_rel)->get();
+        
+        //Storage::disk('public');
 
         foreach($paths as $p){
             $fullpath = $this->path_abs.DIRECTORY_SEPARATOR.$p;
@@ -44,10 +51,14 @@ class FilePath
                 $file_model = $files_in_db->firstWhere('file_path', $relpath);
                 $id = $file_model->id ?? 0;
 
+                $size = Storage::size('public/'.$relpath);
+                $size = $this->formatSize($size);
+
                 $files []= [
                     'name' => $p,
                     'path' => $relpath,
-                    'file_id' => $id
+                    'file_id' => $id,
+                    'size' => $size,
                 ];
             } else {
                 if(in_array($p, $this->ignoredDirs)) continue;
@@ -84,5 +95,17 @@ class FilePath
     }
     public function getDir(){
         return preg_replace('/\/[^\/]+$/', '', $this->path_rel);
+    }
+    protected function formatSize($size){
+
+        if ($size >= 1073741824) {
+            return round($size / 1024 / 1024 / 1024,1) . 'GB';
+        } else if ($size >= 1048576) {
+            return round($size / 1024 / 1024,1) . 'MB';
+        } else if($size >= 1024) {
+            return round($size / 1024,1) . 'KB';
+        } else {
+            return $size . ' bytes';
+        }
     }
 }
