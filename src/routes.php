@@ -13,6 +13,8 @@ use Pageworks\LaravelFileManager\Http\Controllers\FileManageController;
 
 Route::get('/files', [FileManageController::class, 'browse']);
 Route::get('/download', [FileManageController::class, 'download']);
+Route::get('/files/add', [FileManageController::class, 'add']);
+Route::get('/files/remove', [FileManageController::class, 'remove']);
 
 // tus & uploads:
 

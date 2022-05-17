@@ -44,10 +44,12 @@
                 border:1px solid rgba(0,0,0,.25);
                 float:right;
             }
-            a.bttn:hover {
+            ul.list-dirs a.bttn:hover ,
+            ul.list-files a.bttn:hover {
                 border:1px solid #000;
                 background:#666;
                 color:#fff;
+                text-decoration:none;
             }
             ul.list-dirs, ul.list-files {
                 margin:0;
@@ -86,7 +88,17 @@
 
             <ul class='list-files'>
             @foreach($list['files'] as $file)
-                <li><a href='/download?path={{ $file['path'] }}'>{{ $file['name'] }}</a></li>
+                @if ($file['file_id'] > 0)
+                <li>
+                    <a href='/download?path={{ $file['path'] }}'>{{ $file['name'] }}</a>
+                    <a href='/files/remove?id={{ $file['file_id'] }}' class='bttn'>Remove from DB</a>
+                </li>
+                @else
+                <li>
+                    <a href='/download?path={{ $file['path'] }}'>{{ $file['name'] }}</a>
+                    <a href='/files/add?path={{ $file['path'] }}' class='bttn'>Add to DB</a>
+                </li>
+                @endif
             @endforeach
             </ul>
 

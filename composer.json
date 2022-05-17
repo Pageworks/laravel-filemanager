@@ -21,7 +21,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Pageworks\\LaravelFileManager\\": "src/"
+            "Pageworks\\LaravelFileManager\\": "src",
+            "Pageworks\\LaravelFileManager\\Database\\Factories\\": "database/factories"
         }
     },
     "autoload-dev": {

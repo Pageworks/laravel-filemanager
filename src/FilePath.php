@@ -2,6 +2,7 @@
 
 namespace Pageworks\LaravelFileManager;
 
+use Pageworks\LaravelFileManager\Models\File;
 use Illuminate\Http\Request;
 
 class FilePath
@@ -13,9 +14,12 @@ class FilePath
     protected $ignoredFiles = ['.DS_Store','.gitignore'];
     protected $ignoredDirs = ['.'];
 
-    public function __construct(Request $request)
+    public function __construct(string|Request $request)
     {
-        $request_path = $request->input('path') ?? '.';
+
+        if(is_string($request)) $request_path = $request;
+        else $request_path = $request->input('path') ?? '.';
+
         $this->path_root = storage_path("app/public");
         $this->path_abs = realpath($this->path_root.DIRECTORY_SEPARATOR.$request_path);
         $this->path_rel = str_replace($this->path_root, '', $this->path_abs);
@@ -23,9 +27,12 @@ class FilePath
     public function getListFiles(){
         $paths = [];
         $paths = scandir($this->path_abs);
-
+        
         $files = [];
         $dirs = [];
+
+        // search db for files:
+        $files_in_db = File::where('dir_path','=',$this->path_rel)->get();
 
         foreach($paths as $p){
             $fullpath = $this->path_abs.DIRECTORY_SEPARATOR.$p;
@@ -33,9 +40,14 @@ class FilePath
     
             if(is_file($fullpath)){
                 if(in_array($p, $this->ignoredFiles)) continue;
+
+                $file_model = $files_in_db->firstWhere('file_path', $relpath);
+                $id = $file_model->id ?? 0;
+
                 $files []= [
                     'name' => $p,
                     'path' => $relpath,
+                    'file_id' => $id
                 ];
             } else {
                 if(in_array($p, $this->ignoredDirs)) continue;
@@ -46,9 +58,6 @@ class FilePath
                 ];
             }
         }
-
-        $elo = config('laravel-filemanager.eloquent-class','');
-        if($elo) $elo = app($elo);
 
         return [
             'dirs' => $dirs,
@@ -69,5 +78,11 @@ class FilePath
     }
     public function isDir(){
         return $this->isOutsideRoot() === false && is_dir($this->path_abs);
+    }
+    public function isFile(){
+        return $this->isOutsideRoot() === false && is_file($this->path_abs);
+    }
+    public function getDir(){
+        return preg_replace('/\/[^\/]+$/', '', $this->path_rel);
     }
 }

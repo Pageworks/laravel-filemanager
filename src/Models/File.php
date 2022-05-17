@@ -9,11 +9,12 @@ class File extends Model
 {
     use HasFactory;
 
-    /**
-     * Polymorphic relationship to a "user" table.
-     *
-     * @return void
-     */
+    // what factory class to use
+    protected static function newFactory(){
+        return \Pageworks\LaravelFileManager\Database\Factories\FileFactory::new();
+    }
+
+    // Polymorphic relationship to a "user" table.
     public function owner(){
         return $this->morphTo();
     }
