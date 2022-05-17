@@ -3,6 +3,8 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- uppy style -->
+        <link href="https://releases.transloadit.com/uppy/v2.9.5/uppy.min.css" rel="stylesheet">
 
         <title>Files</title>
         <!-- Styles -->
@@ -19,23 +21,26 @@
         <style>
             .box-browse {
                 border-radius:5px;
-                border:solid #999 1px;
-                background:#ddd;
+                border:solid #ccc 1px;
+                background:#eee;
                 margin:50px;
             }
             .box-browse hgroup {
-                font-size:75%;
-                padding:5px 20px;
+                padding:20px;
             }
             .box-browse hgroup h1 {
+                font-size:125%;
                 font-weight:normal;
                 margin-bottom:5px;
+                margin:0;
             }
             .box-browse hgroup h2 {
+                font-size:80%;
                 font-weight:normal;
                 margin-top:5px;
             }
-            a.bttn{
+            a.bttn, .UppyModalOpenerBtn {
+                z-index:100;
                 background:#ccc;
                 padding:2px 5px;
                 border-radius:3px;
@@ -48,8 +53,7 @@
                 float:right;
                 margin-right:10px;
             }
-            ul.list-dirs a.bttn:hover ,
-            ul.list-files a.bttn:hover {
+            a.bttn:hover {
                 border:1px solid #000;
                 background:#666;
                 color:#fff;
@@ -62,25 +66,29 @@
                 overflow: hidden;
             }
             ul.list-dirs li, ul.list-files li {
-                border-top:1px solid #999;
+                border-top:1px solid #ccc;
                 padding:10px 20px;
                 margin:0;
             }
-            ul.list-dirs li a:hover, ul.list-files li a:hover {
+            ul.list-dirs li a:hover, ul.list-files li a:not(.bttn):hover {
                 color:#3333BB;
                 text-decoration: underline;
             }
             ul.list-dirs li:hover, ul.list-files li:hover {
-                background:#EEE;
+                background:#ddd;
             }
-
+            .DashboardContainer {
+                width:600px;
+                margin:0 auto;
+            }
 </style>
     </head>
     <body class="antialiased">
         <div class='box-browse'>
             @if ($list)
             <hgroup>
-            <h1>Showing {{$path->getPathRelative()}}/</h1>
+            <button class='UppyModalOpenerBtn'>Upload</button>
+            <h1>Showing {{$path->getPathRelative()}}/</ h1>
             <h2>{{$path->getPathAbsolute()}}/</h2>
             </hgroup>
 
@@ -110,5 +118,45 @@
             <h1>Directory not found</h1>
             <h2><a href='/files'>Back to /</h2>
         @endif
+        
+        <div class='DashboardContainer'></div>
+        <!-- jQuery: -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    
+        <!-- Uppy: -->
+        <script src="https://releases.transloadit.com/uppy/v2.9.5/uppy.min.js"></script>
+        <script>
+            const upz = new Uppy.Core({debug:true}).use(Uppy.Dashboard, {
+                debug:true,
+                /*
+                onBeforeUpload: (files) => {
+                    const token = $("#input-csrf").val();
+                    const updatedFiles = Object.assign({}, files);
+                    Object.keys(updatedFiles).forEach(fileId => {
+                        updatedFiles[fileId].tus = {
+                            headers: {
+                                'Accept': 'application/json',
+                                'Authorization': 'Bearer ' + token,
+                            }
+                        };
+                    });
+                    return updatedFiles;
+                },
+                */
+                inline: false,
+                trigger: '.UppyModalOpenerBtn',
+                target: '.DashboardContainer',
+                showProgressDetails: true,
+                height: 400,
+                browserBackButtonClose: false,
+                restrictions: {
+                    maxFileSize: 1000000 // ~10MB
+                }
+            }).use(Uppy.Tus, {
+                endpoint: 'http://localhost:8000/tus',
+                chunkSize: 10000000 // ~10MB
+            });
+            //UppyModalOpenerBtn.on
+        </script>
     </body>
 </html>

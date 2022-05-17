@@ -38,8 +38,6 @@ class FilePath
 
         // search db for files:
         $files_in_db = File::where('dir_path','=',$this->path_rel)->get();
-        
-        //Storage::disk('public');
 
         foreach($paths as $p){
             $fullpath = $this->path_abs.DIRECTORY_SEPARATOR.$p;
@@ -51,14 +49,15 @@ class FilePath
                 $file_model = $files_in_db->firstWhere('file_path', $relpath);
                 $id = $file_model->id ?? 0;
 
-                $size = Storage::size('public/'.$relpath);
-                $size = $this->formatSize($size);
+                $sizeBytes = Storage::size('public/'.$relpath);
+                $sizeFormatted = $this->formatSize($sizeBytes);
 
                 $files []= [
                     'name' => $p,
                     'path' => $relpath,
                     'file_id' => $id,
-                    'size' => $size,
+                    'size' => $sizeFormatted,
+                    'bytes' => $sizeBytes
                 ];
             } else {
                 if(in_array($p, $this->ignoredDirs)) continue;
