@@ -83,6 +83,10 @@ class FilePath
                     $urls['add'] = "/files/add?{$lookup}";
                 }
 
+                $os_owner_id = fileowner($this->path_abs);
+                $os_owner_user = posix_getpwuid($os_owner_id);
+                $os_permissions = substr(sprintf('%o', fileperms($this->path_abs)), -4);
+
                 $files []= [
                     'name' => $p,
                     'path' => $relpath,
@@ -92,8 +96,16 @@ class FilePath
                     'location_rel' => $this->path_rel,
                     'location_abs' => $this->path_abs,
                     'urls' => $urls,
+                    'owner_name' => $os_owner_user['name'],
+                    'owner_id' => $os_owner_id,
+                    'permissions' => $os_permissions,
                 ];
             } else {
+
+                $os_owner_id = fileowner($this->path_abs);
+                $os_owner_user = posix_getpwuid($os_owner_id);
+                $os_permissions = substr(sprintf('%o', fileperms($this->path_abs)), -4);
+
                 if(in_array($p, $this->ignoredDirs)) continue;
                 if($p == '..' && $this->isAtRoot()) continue;
                 $dirs [$p]= [
@@ -101,7 +113,10 @@ class FilePath
                     'path' => $relpath,
                     'urls' => [
                         'browse' => "/files?path={$relpath}"
-                    ]
+                    ],
+                    'owner_name' => $os_owner_user['name'],
+                    'owner_id' => $os_owner_id,
+                    'permissions' => $os_permissions,
                 ];
             }
         }

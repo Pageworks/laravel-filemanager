@@ -59,10 +59,6 @@
                 margin:0 0 0 5px;
                 cursor:pointer;
             }
-            ul span.size {
-                float:right;
-                margin-right:10px;
-            }
             a.bttn:hover {
                 border:1px solid #000;
                 background:#666;
@@ -82,9 +78,15 @@
                 clear:both;
             }
             li .bar {
-                padding:10px 20px;
+                padding:0;
                 margin:0;
                 display:flex;
+            }
+            li .bar > * {
+                padding:10px 5px;
+            }
+            li .bar > *:last-child {
+                padding:10px 20px 10px 5px;
             }
             li .expand {
                 display:none;
@@ -96,13 +98,12 @@
             li.show .expand {
                 display:flex;
             }
-            a.label {
+            li .bar a.label {
+                padding:10px 20px;
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 overflow: hidden;
-            }
-            li.file a.label {
-                padding:0;
+                display: block;
                 flex-grow: 1;
             }
             a.label:hover {
@@ -122,8 +123,13 @@
                 line-height: 175%;
             }
             .keyvalue *:first-child {
-                width:100px;
-                min-width:100px;
+                min-width:130px;
+                text-transform: uppercase;
+                font-size:75%;
+                text-align:right;
+                padding-right:15px;
+                font-weight:bold;
+                color:#333;
             }
             .keyvalue *:last-child {
                 text-overflow: ellipsis;
@@ -152,6 +158,20 @@
                 <li>
                     <span class='bar'>
                         <a href='{{ $dir['urls']['browse'] }}' class='label'>{{ $dir['name'] }}</a>
+                        <span><a class='bttn expand-file'>Details</a></span>
+                    </span>
+                    <span class="expand">
+                        <span class='meta'>
+                            <span class='keyvalue'><span>OS file owner</span><span>{{ $dir['owner_name'] }} ( {{ $dir['owner_id'] }} )</span></span>
+                            <span class='keyvalue'><span>Permissions</span><span>{{ $dir['permissions'] }}</span></span>
+                        </span>
+                        <span class='bttns'>
+                            <a href='#' class='bttn'>Rename</a>
+                            @if (array_key_exists('delete', $dir['urls']))
+                            <a href='{{ $dir['urls']['delete'] }}' class='bttn'>Delete</a>
+                            @endif
+                            <span class='clear'></span>
+                        </span>
                     </span>
                 </li>
             @endforeach
@@ -163,7 +183,7 @@
                     <span class='bar'>
                         <a href='{{ $file['urls']['download'] }}' class='label'>{{ $file['name'] }}</a>
                         <span class='size'>{{ $file['size'] }}</span>
-                        <a class='bttn expand-file'>Details</a>
+                        <span><a class='bttn expand-file'>Details</a></span>
                     </span>
                     <span class="expand">
                         <span class='meta'>
@@ -172,6 +192,8 @@
                             <span class='keyvalue'><span>Absolute path</span><span>{{ $file['location_abs'] }}</span></span>
                             <span class='keyvalue'><span>File size</span><span>{{ $file['size'] }}</span></span>
                             <span class='keyvalue'><span>Size in bytes</span><span>{{ $file['bytes'] }}</span></span>
+                            <span class='keyvalue'><span>OS file owner</span><span>{{ $file['owner_name'] }} ( {{ $file['owner_id'] }} )</span></span>
+                            <span class='keyvalue'><span>Permissions</span><span>{{ $file['permissions'] }}</span></span>
                         </span>
                         <span class='bttns'>
                             <a href='#' class='bttn'>Rename</a>
@@ -240,7 +262,7 @@
         <script>
             $(function(){
                 $('.expand-file').click(function(e){
-                    $(this).parent().parent().toggleClass('show');
+                    $(this).parent().parent().parent().toggleClass('show');
                 });
             });
         </script>
