@@ -70,12 +70,28 @@ class FilePath
                 $sizeBytes = Storage::size('public/'.$relpath);
                 $sizeFormatted = $this->formatSize($sizeBytes);
 
+                $lookup = ($id > 0) ? "id={$id}" : "path={$relpath}";
+
+                $urls = [
+                    'download' => "/files/download?{$lookup}",
+                    'delete' => "/files/delete?{$lookup}",
+                ];
+
+                if($id > 0){
+                    $urls['remove'] = "/files/remove?{$lookup}";
+                } else {
+                    $urls['add'] = "/files/add?{$lookup}";
+                }
+
                 $files []= [
                     'name' => $p,
                     'path' => $relpath,
                     'file_id' => $id,
                     'size' => $sizeFormatted,
-                    'bytes' => $sizeBytes
+                    'bytes' => $sizeBytes,
+                    'location_rel' => $this->path_rel,
+                    'location_abs' => $this->path_abs,
+                    'urls' => $urls,
                 ];
             } else {
                 if(in_array($p, $this->ignoredDirs)) continue;
@@ -83,6 +99,9 @@ class FilePath
                 $dirs [$p]= [
                     'name' => $p,
                     'path' => $relpath,
+                    'urls' => [
+                        'browse' => "/files?path={$relpath}"
+                    ]
                 ];
             }
         }

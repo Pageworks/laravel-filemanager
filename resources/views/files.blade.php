@@ -23,6 +23,9 @@
                 clear:both;
                 display:block;
             }
+            .hidden {
+                display:none;
+            }
             .box-browse {
                 border-radius:5px;
                 border:solid #ccc 1px;
@@ -54,6 +57,7 @@
                 float:right;
                 white-space: nowrap;
                 margin:0 0 0 5px;
+                cursor:pointer;
             }
             ul span.size {
                 float:right;
@@ -73,9 +77,23 @@
             }
             ul.list-dirs li, ul.list-files li {
                 border-top:1px solid #ccc;
-                padding:10px 20px;
+                padding:0;
                 margin:0;
                 clear:both;
+            }
+            li .bar {
+                padding:10px 20px;
+                margin:0;
+                display:flex;
+            }
+            li .expand {
+                display:none;
+                border-top:solid 1px #999;
+                padding:20px;
+                background:#ddd;
+                box-shadow:0 1px 2px rgba(0,0,0,.3) inset;
+            }
+            li.show .expand {
                 display:flex;
             }
             a.label {
@@ -94,6 +112,26 @@
             ul.list-dirs li:hover, ul.list-files li:hover {
                 background:#ddd;
             }
+            .meta {
+                flex-grow: 1;
+                min-width: 0;
+            }
+            .keyvalue {
+                display: flex;
+                font-size:90%;
+                line-height: 175%;
+            }
+            .keyvalue *:first-child {
+                width:100px;
+                min-width:100px;
+            }
+            .keyvalue *:last-child {
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
+                direction: rtl;
+                text-align: left;
+            }
             .DashboardContainer {
                 width:600px;
                 margin:0 auto;
@@ -111,25 +149,44 @@
 
             <ul class='list-dirs'>
             @foreach ($list['dirs'] as $dir)
-                <li><a href='/files?path={{ $dir['path'] }}' class='label'>{{ $dir['name'] }}</a></li>
+                <li>
+                    <span class='bar'>
+                        <a href='{{ $dir['urls']['browse'] }}' class='label'>{{ $dir['name'] }}</a>
+                    </span>
+                </li>
             @endforeach
             </ul>
 
             <ul class='list-files'>
             @foreach($list['files'] as $file)
                 <li class='file'>
-                    @if ($file['file_id'] > 0)
-                    <a href='/files/download?id={{ $file['file_id'] }}' class='label'>{{ $file['name'] }}</a>
-                    <span class='size'>{{ $file['size'] }}</span>
-                    <a href='/files/remove?id={{ $file['file_id'] }}' class='bttn'>Remove from DB</a>
-                    <a href='/files/delete?id={{ $file['file_id'] }}' class='bttn'>Delete</a>
-                    @else
-                    <a href='/files/download?path={{ $file['path'] }}' class='label'>{{ $file['name'] }}</a>
-                    <span class='size'>{{ $file['size'] }}</span>
-                    <a href='/files/add?path={{ $file['path'] }}' class='bttn'>Add to DB</a>
-                    <a href='/files/delete?path={{ $file['path'] }}' class='bttn'>Delete</a>
-                    @endif
-                    <span class='clear'></span>
+                    <span class='bar'>
+                        <a href='{{ $file['urls']['download'] }}' class='label'>{{ $file['name'] }}</a>
+                        <span class='size'>{{ $file['size'] }}</span>
+                        <a class='bttn expand-file'>Details</a>
+                    </span>
+                    <span class="expand">
+                        <span class='meta'>
+                            <span class='keyvalue'><span>Filename</span><span>{{ $file['name'] }}</span></span>
+                            <span class='keyvalue'><span>Relative path</span><span>{{ $file['location_rel'] }}</span></span>
+                            <span class='keyvalue'><span>Absolute path</span><span>{{ $file['location_abs'] }}</span></span>
+                            <span class='keyvalue'><span>File size</span><span>{{ $file['size'] }}</span></span>
+                            <span class='keyvalue'><span>Size in bytes</span><span>{{ $file['bytes'] }}</span></span>
+                        </span>
+                        <span class='bttns'>
+                            <a href='#' class='bttn'>Rename</a>
+                            @if (array_key_exists('remove', $file['urls']))
+                            <a href='{{ $file['urls']['remove'] }}' class='bttn'>Remove from DB</a>
+                            @endif
+                            @if (array_key_exists('add', $file['urls']))
+                            <a href='{{ $file['urls']['add'] }}' class='bttn'>Add to DB</a>
+                            @endif
+                            @if (array_key_exists('delete', $file['urls']))
+                            <a href='{{ $file['urls']['delete'] }}' class='bttn'>Delete</a>
+                            @endif
+                            <span class='clear'></span>
+                        </span>
+                    </span>
                 </li>
             @endforeach
             </ul>
@@ -178,5 +235,15 @@
                 chunkSize: 10000000 // ~10MB
             });
         </script>
+
+        <!-- Expand / Collapse -->
+        <script>
+            $(function(){
+                $('.expand-file').click(function(e){
+                    $(this).parent().parent().toggleClass('show');
+                });
+            });
+        </script>
+
     </body>
 </html>
