@@ -124,6 +124,7 @@
             }
             .keyvalue *:first-child {
                 min-width:130px;
+                max-width:130px;
                 text-transform: uppercase;
                 font-size:75%;
                 text-align:right;
@@ -135,8 +136,10 @@
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 overflow: hidden;
+                /*
                 direction: rtl;
                 text-align: left;
+                */
             }
             .DashboardContainer {
                 width:600px;
@@ -190,10 +193,13 @@
                             <span class='keyvalue'><span>Filename</span><span>{{ $file['name'] }}</span></span>
                             <span class='keyvalue'><span>Relative path</span><span>{{ $file['location_rel'] }}</span></span>
                             <span class='keyvalue'><span>Absolute path</span><span>{{ $file['location_abs'] }}</span></span>
-                            <span class='keyvalue'><span>File size</span><span>{{ $file['size'] }}</span></span>
-                            <span class='keyvalue'><span>Size in bytes</span><span>{{ $file['bytes'] }}</span></span>
+                            <span class='keyvalue'><span>File size</span><span>{{ $file['size'] }} ( {{ $file['bytes'] }} bytes )</span></span>
                             <span class='keyvalue'><span>OS file owner</span><span>{{ $file['owner_name'] }} ( {{ $file['owner_id'] }} )</span></span>
                             <span class='keyvalue'><span>Permissions</span><span>{{ $file['permissions'] }}</span></span>
+
+                            <span class='keyvalue'><span>Accessed</span><span>{{ date('h:i a \o\n l, F d Y', $file['atime']) }}</span></span>
+                            <span class='keyvalue'><span>Modified</span><span>{{ date('h:i a \o\n l, F d Y', $file['mtime']) }}</span></span>
+                            <span class='keyvalue'><span>Changed</span><span>{{ date('h:i a \o\n l, F d Y', $file['ctime']) }}</span></span>
                         </span>
                         <span class='bttns'>
                             <a href='#' class='bttn'>Rename</a>
@@ -212,7 +218,13 @@
                 </li>
             @endforeach
             </ul>
-
+            </div>
+            <div>
+                <ul>
+                @foreach($list['keys'] as $key)
+                    <li>{{ $key['file'] }} -- {{ $key['key'] }} -- <a href='{{ $key['delete'] }}'>remove</a></li>
+                @endforeach
+                </ul>
             </div>
         @else
             <h1>Directory not found</h1>

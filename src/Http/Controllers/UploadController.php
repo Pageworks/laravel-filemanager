@@ -20,7 +20,7 @@ class UploadController extends BaseController {
 
         if($path->isDir()){
             $server = app('tus-server');
-            $server->setUploadDir($path->getPathAbsolute());
+            $server->setUploadDir(rtrim($path->getPathAbsolute(), '/'));
             $server->serve()->send();
         }
     }

@@ -38,13 +38,25 @@ Route::get('/files/uploads', function(){
         echo "<li>{$file['name']}</li>";
         echo "<li>{$file['file_path']}</li>";
         echo "<li>{$file['metadata']['type']}</li>";
-        echo "<li><a href='/uploads/del/{$key}'>Delete</a></li>";
+        echo "<li><a href='/files/uploads/remove/{$key}'>Delete key</a></li>";
+        echo "<li><a href='/files/uploads/delete/{$key}'>Delete key AND file</a></li>";
         echo "</ul>";
         echo "</div>";
     }
 });
 
-Route::get('/files/uploads/del/{id}', function(Request $request, $id){
+Route::get('/files/uploads/remove/{id}', function(Request $request, $id){
+
+    $cache = app('tus-server')->getCache();
+    $isDeleted = $cache->delete($id);
+
+    if ( ! $isDeleted ) {
+        return response('File not found', HttpResponse::HTTP_GONE);
+    }
+
+    return redirect('/files/uploads');
+});
+Route::get('/files/uploads/delete/{id}', function(Request $request, $id){
     $cache = app('tus-server')->getCache();
     
     $fileMeta = $cache->get($id);
@@ -57,7 +69,7 @@ Route::get('/files/uploads/del/{id}', function(Request $request, $id){
 
     unlink($resource);
 
-    return redirect('/files');
+    return redirect('/files/uploads');
 });
 
 Route::match(['post','put','patch','delete'], "/files/tus/{key?}", [UploadController::class, 'upload']);

@@ -32,9 +32,7 @@ class TusUploadComplete
         
 
         $path = new FilePath($file->getFilePath());
-
         $model = $path->addToDB();
-
         (new ConsoleOutput())->writeln("added to db, id: {$model->id}");
     }
 }

@@ -57,6 +57,20 @@ class FilePath
         // search db for files:
         $files_in_db = File::where('dir_path','=',$this->path_rel)->get();
 
+        // search redis for files:
+        $cache = app('tus-server')->getCache();
+        $keys = $cache->keys();
+        $keys_in_dir = [];
+        foreach($keys as $key){
+            $file = $cache->get($key, true);
+            $temp = new FilePath($file['file_path']);
+            if($temp->getDir() == $this->path_rel) $keys_in_dir []= [
+                'key' => $key,
+                'file' => $file['name'],
+                'delete' => "/files/uploads/remove/{$key}",
+            ];
+        }
+
         foreach($paths as $p){
             $fullpath = $this->path_abs.DIRECTORY_SEPARATOR.$p;
             $relpath = str_replace($this->path_root, '', realpath($fullpath));
@@ -83,6 +97,8 @@ class FilePath
                     $urls['add'] = "/files/add?{$lookup}";
                 }
 
+                $stats = lstat($this->path_abs);
+
                 $os_owner_id = fileowner($this->path_abs);
                 $os_owner_user = posix_getpwuid($os_owner_id);
                 $os_permissions = substr(sprintf('%o', fileperms($this->path_abs)), -4);
@@ -99,6 +115,9 @@ class FilePath
                     'owner_name' => $os_owner_user['name'],
                     'owner_id' => $os_owner_id,
                     'permissions' => $os_permissions,
+                    'atime' => $stats['atime'],
+                    'mtime' => $stats['mtime'],
+                    'ctime' => $stats['ctime'],
                 ];
             } else {
 
@@ -124,6 +143,7 @@ class FilePath
         return [
             'dirs' => $dirs,
             'files' => $files,
+            'keys' => $keys_in_dir,
         ];
     }
     public function getSize(){
