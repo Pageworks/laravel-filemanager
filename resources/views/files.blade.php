@@ -105,8 +105,8 @@
             @if ($list)
             <hgroup>
             <button class='UppyModalOpenerBtn'>Upload</button>
-            <h1>{{$path->getPathRelative()}}/</ h1>
-            <h2>{{$path->getPathAbsolute()}}/</h2>
+            <h1>{{$path->getPathRelative()}}</ h1>
+            <h2>{{$path->getPathAbsolute()}}</h2>
             </hgroup>
 
             <ul class='list-dirs'>
@@ -141,6 +141,7 @@
         @endif
         
         <div class='DashboardContainer'></div>
+
         <!-- jQuery: -->
         <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     
@@ -149,21 +150,20 @@
         <script>
             const upz = new Uppy.Core({debug:true}).use(Uppy.Dashboard, {
                 debug:true,
-                /*
                 onBeforeUpload: (files) => {
-                    const token = $("#input-csrf").val();
+                    
+                    //const token = $("#input-csrf").val();
                     const updatedFiles = Object.assign({}, files);
+                    
                     Object.keys(updatedFiles).forEach(fileId => {
                         updatedFiles[fileId].tus = {
                             headers: {
-                                'Accept': 'application/json',
-                                'Authorization': 'Bearer ' + token,
+                                'Accept': 'application/json'
                             }
                         };
                     });
                     return updatedFiles;
                 },
-                */
                 inline: false,
                 trigger: '.UppyModalOpenerBtn',
                 target: '.DashboardContainer',
@@ -174,10 +174,9 @@
                     maxFileSize: 1000000 // ~10MB
                 }
             }).use(Uppy.Tus, {
-                endpoint: 'http://localhost:8000/files/tus',
+                endpoint: 'http://localhost:8000/files/tus?path={{$path->getPathRelative()}}',
                 chunkSize: 10000000 // ~10MB
             });
-            //UppyModalOpenerBtn.on
         </script>
     </body>
 </html>

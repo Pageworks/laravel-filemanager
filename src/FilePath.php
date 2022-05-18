@@ -36,6 +36,16 @@ class FilePath
         }
         
         $this->path_rel = str_replace($this->path_root, '', $this->path_abs);
+
+        if($this->isDir()){
+            // add trailing slash:
+            
+            //$index = strlen($this->path_rel) - 1;
+            //if($index >= 0 && $this->path_rel[$index] != '/') $this->path_rel = $this->path_rel.'/';
+            
+            $this->path_rel .= '/';
+            $this->path_abs .= '/';
+        }
     }
     public function getListFiles(){
         $paths = [];
@@ -97,7 +107,7 @@ class FilePath
         return ($this->path_abs === $this->path_rel);
     }
     public function isAtRoot(){
-        return ($this->path_rel == "");
+        return ($this->path_rel == '/');
     }
     public function isDir(){
         return $this->isOutsideRoot() === false && is_dir($this->path_abs);
@@ -106,15 +116,15 @@ class FilePath
         return $this->isOutsideRoot() === false && is_file($this->path_abs);
     }
     public function getDir(){
-        return preg_replace('/\/[^\/]+$/', '', $this->path_rel);
+        return preg_replace('/\/[^\/]+$/', '/', $this->path_rel);
     }
     public function getFileName(){
-        return preg_replace('/\/([^\/]+)$/', '$1', $this->path_rel);
+        return preg_replace('/^.*\/([^\/]+)$/', '$1', $this->path_rel);
     }
     public function addToDB(){
         
         if(!$this->isFile()) return null;
-        
+
         return \Pageworks\LaravelFileManager\Models\File::create([
             'file_name' => $this->getFileName(),
             'file_path' => $this->getPathRelative(),

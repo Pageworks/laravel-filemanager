@@ -23,6 +23,10 @@ class FileManageController extends BaseController {
                 'list' => $list,
                 'path' => $path,
             ]);
+        } else {
+            // path->isDir() also checks whether directory is within the root directory
+            
+            return response("<h1>Directory not found</h1><h2><a href='/files'>Back to /</h2>", 404);
         }
     }
     // downloads a file
