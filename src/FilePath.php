@@ -16,14 +16,16 @@ class FilePath
     protected $ignoredFiles = ['.DS_Store','.gitignore'];
     protected $ignoredDirs = ['.'];
 
+    protected $model = null;
+
     public function __construct(string|Request $request = '.')
     {
         if(is_string($request)) {
             $request_path = $request;
         }
         else if($id = $request->input('id')){
-            $file = File::find($id);
-            $request_path = $file->file_path ?? '.';
+            $this->model = File::find($id);
+            $request_path = $this->model->file_path ?? '.';
         }
         else $request_path = $request->input('path') ?? '.';
 
@@ -40,19 +42,16 @@ class FilePath
         if($this->isDir()){
             // add trailing slash:
             
-            //$index = strlen($this->path_rel) - 1;
-            //if($index >= 0 && $this->path_rel[$index] != '/') $this->path_rel = $this->path_rel.'/';
-            
             $this->path_rel .= '/';
             $this->path_abs .= '/';
         }
     }
     public function getListFiles(){
-        $paths = [];
-        $paths = scandir($this->path_abs);
-        
-        $files = [];
-        $dirs = [];
+
+        if(!$this->isDir()){
+            // error, not a directory
+            return [];
+        }        
 
         // search db for files:
         $files_in_db = File::where('dir_path','=',$this->path_rel)->get();
@@ -64,13 +63,15 @@ class FilePath
         foreach($keys as $key){
             $file = $cache->get($key, true);
             $temp = new FilePath($file['file_path']);
-            if($temp->getDir() == $this->path_rel) $keys_in_dir []= [
-                'key' => $key,
-                'file' => $file['name'],
-                'delete' => "/files/uploads/remove/{$key}",
-            ];
+            if($temp->getDir() == $this->path_rel)
+                $keys_in_dir [$file['name']] = $key;
         }
 
+        // search the directory:
+        $paths = [];
+        $paths = scandir($this->path_abs);
+        $files = [];
+        $dirs = [];
         foreach($paths as $p){
             $fullpath = $this->path_abs.DIRECTORY_SEPARATOR.$p;
             $relpath = str_replace($this->path_root, '', realpath($fullpath));
@@ -78,40 +79,22 @@ class FilePath
             if(is_file($fullpath)){
                 if(in_array($p, $this->ignoredFiles)) continue;
 
-                $file_model = $files_in_db->firstWhere('file_path', $relpath);
-                $id = $file_model->id ?? 0;
+                // get filesystem info:
 
                 $sizeBytes = Storage::size('public/'.$relpath);
                 $sizeFormatted = $this->formatSize($sizeBytes);
-
-                $lookup = ($id > 0) ? "id={$id}" : "path={$relpath}";
-
-                $urls = [
-                    'download' => "/files/download?{$lookup}",
-                    'delete' => "/files/delete?{$lookup}",
-                ];
-
-                if($id > 0){
-                    $urls['remove'] = "/files/remove?{$lookup}";
-                } else {
-                    $urls['add'] = "/files/add?{$lookup}";
-                }
-
                 $stats = lstat($this->path_abs);
-
                 $os_owner_id = fileowner($this->path_abs);
                 $os_owner_user = posix_getpwuid($os_owner_id);
                 $os_permissions = substr(sprintf('%o', fileperms($this->path_abs)), -4);
 
-                $files []= [
+                $data = [
                     'name' => $p,
                     'path' => $relpath,
-                    'file_id' => $id,
                     'size' => $sizeFormatted,
                     'bytes' => $sizeBytes,
                     'location_rel' => $this->path_rel,
                     'location_abs' => $this->path_abs,
-                    'urls' => $urls,
                     'owner_name' => $os_owner_user['name'],
                     'owner_id' => $os_owner_id,
                     'permissions' => $os_permissions,
@@ -119,6 +102,42 @@ class FilePath
                     'mtime' => $stats['mtime'],
                     'ctime' => $stats['ctime'],
                 ];
+
+                // look in list of keys:
+                if(array_key_exists($p, $keys_in_dir)){
+                    $data['tus_key'] = $keys_in_dir[$p];
+                }
+
+                // look in db collection using the file path:
+                $file_model = $files_in_db->firstWhere('file_path', $relpath);
+                if($file_model){
+                    $data['model'] = $file_model->toArray();
+                }
+
+                // build urls for hateoas
+                $urls = [];
+                $lookup = '';
+
+                
+                if($file_model){
+                    $lookup = "id={$file_model->id}";
+                    $urls['remove'] = "/files/remove?{$lookup}";
+                } else {
+                    $lookup = "path={$relpath}";
+                    $urls['add'] = "/files/add?{$lookup}";
+                }
+                if(array_key_exists('tus_key', $data)){
+                    $urls['remove-upload-key'] = "/files/uploads/remove/{$data['tus_key']}";
+                }
+                
+                $urls['download'] = "/files/download?{$lookup}";
+                $urls['delete'] = "/files/delete?{$lookup}";
+                $urls['rename'] = "/files/rename?{$lookup}";
+
+                $data['urls'] = $urls;
+
+                $files []= $data;
+
             } else {
 
                 $os_owner_id = fileowner($this->path_abs);
@@ -143,7 +162,6 @@ class FilePath
         return [
             'dirs' => $dirs,
             'files' => $files,
-            'keys' => $keys_in_dir,
         ];
     }
     public function getSize(){
@@ -172,8 +190,18 @@ class FilePath
     public function getDir(){
         return preg_replace('/\/[^\/]+$/', '/', $this->path_rel);
     }
+    public function getDirAbs(){
+        return preg_replace('/\/[^\/]+$/', '/', $this->path_abs);
+    }
     public function getFileName(){
         return preg_replace('/^.*\/([^\/]+)$/', '$1', $this->path_rel);
+    }
+    public function getModel(){
+        if($this->model){
+            return $this->model;
+        }
+        $this->model = \Pageworks\LaravelFileManager\Models\File::where('file_path','=',$this->getPathRelative())->first();
+        return $this->model;
     }
     public function addToDB(){
         
@@ -185,6 +213,37 @@ class FilePath
             'dir_path' => $this->getDir(),
             'size' => $this->getSize(),
         ]);
+    }
+    public function updateDB(){
+        //$model = $this->getModel();
+        if($this->model) $this->model->update([
+            'file_name' => $this->getFileName(),
+            'file_path' => $this->getPathRelative(),
+            'dir_path' => $this->getDir(),
+            'size' => $this->getSize(),
+        ]);
+    }
+    public function rename($name){
+        if($this->isFile()){
+
+            $newpath = $this->getDirAbs().$name;
+
+            if(rename($this->getPathAbsolute(), $newpath)){
+
+                $this->getModel();
+
+                $this->path_abs = $newpath;
+                $this->path_rel = str_replace($this->path_root, '', $this->path_abs);
+
+                $this->updateDB();
+                return true;
+            }
+            return false;
+        }
+        if($this->isDir()) {
+            return false;
+        }
+        return false;
     }
     public function delete(){
         if(!$this->isFile()) return;

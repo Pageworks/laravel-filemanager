@@ -77,4 +77,21 @@ class FileManageController extends BaseController {
             return response(['error' => 'file not found'], 404);
         }
     }
+    // renames a resource
+    public function rename(Request $request){
+        $path = new FilePath($request);
+        if($path->isFile()){
+
+            $vals = $request->validate([
+                'name' => 'required|string|min:3|max:100',
+            ]);
+            $path->rename($vals['name']);
+
+            return redirect('/files?path='.$path->getDir());
+        }
+        if($path->isDir()) {
+            return redirect('/files?path='.$path->getPathRelative());
+        }
+        return response(['error' => 'file not found'], 404);
+    }
 }

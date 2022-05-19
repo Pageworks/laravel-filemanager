@@ -97,6 +97,7 @@
             }
             li.show .expand {
                 display:flex;
+                flex-direction: column;
             }
             li .bar a.label {
                 padding:10px 20px;
@@ -113,9 +114,19 @@
             ul.list-dirs li:hover, ul.list-files li:hover {
                 background:#ddd;
             }
-            .meta {
+            .meta, .model, .tuskeys {
                 flex-grow: 1;
                 min-width: 0;
+            }
+            .model, .tuskeys {
+                border-top:1px solid #999;
+                padding-top:20px;
+                margin-top:15px;
+            }
+            .meta .bttns,
+            .model .bttns,
+            .tuskeys .bttns {
+                float:right;
             }
             .keyvalue {
                 display: flex;
@@ -169,7 +180,9 @@
                             <span class='keyvalue'><span>Permissions</span><span>{{ $dir['permissions'] }}</span></span>
                         </span>
                         <span class='bttns'>
-                            <a href='#' class='bttn'>Rename</a>
+                            @if (array_key_exists('rename', $dir['urls']))
+                            <a class='bttn rename' data-name='{{ $dir['name'] }}' data-url='{{ $dir['urls']['rename'] }}'>Rename</a>
+                            @endif
                             @if (array_key_exists('delete', $dir['urls']))
                             <a href='{{ $dir['urls']['delete'] }}' class='bttn'>Delete</a>
                             @endif
@@ -190,6 +203,15 @@
                     </span>
                     <span class="expand">
                         <span class='meta'>
+                            <span class='bttns'>
+                                @if (array_key_exists('rename', $file['urls']))
+                                <a class='bttn rename' data-name='{{ $file['name'] }}' data-url='{{ $file['urls']['rename'] }}'>Rename</a>
+                                @endif
+                                @if (array_key_exists('delete', $file['urls']))
+                                <a href='{{ $file['urls']['delete'] }}' class='bttn'>Delete</a>
+                                @endif
+                                <span class='clear'></span>
+                            </span>
                             <span class='keyvalue'><span>Filename</span><span>{{ $file['name'] }}</span></span>
                             <span class='keyvalue'><span>Relative path</span><span>{{ $file['location_rel'] }}</span></span>
                             <span class='keyvalue'><span>Absolute path</span><span>{{ $file['location_abs'] }}</span></span>
@@ -201,30 +223,37 @@
                             <span class='keyvalue'><span>Modified</span><span>{{ date('h:i a \o\n l, F d Y', $file['mtime']) }}</span></span>
                             <span class='keyvalue'><span>Changed</span><span>{{ date('h:i a \o\n l, F d Y', $file['ctime']) }}</span></span>
                         </span>
-                        <span class='bttns'>
-                            <a href='#' class='bttn'>Rename</a>
-                            @if (array_key_exists('remove', $file['urls']))
-                            <a href='{{ $file['urls']['remove'] }}' class='bttn'>Remove from DB</a>
+                        <span class='model'>
+                            <span class='bttns'>
+                                @if (array_key_exists('remove', $file['urls']))
+                                <a href='{{ $file['urls']['remove'] }}' class='bttn'>Remove from DB</a>
+                                @endif
+                                @if (array_key_exists('add', $file['urls']))
+                                <a href='{{ $file['urls']['add'] }}' class='bttn'>Add to DB</a>
+                                @endif
+                                <span class='clear'></span>
+                            </span>
+                            @if (array_key_exists('model', $file))
+                            @foreach($file['model'] as $field=>$value)
+                            <span class='keyvalue'><span>{{ $field }}</span><span>{{ $value }}</span></span>
+                            @endforeach
                             @endif
-                            @if (array_key_exists('add', $file['urls']))
-                            <a href='{{ $file['urls']['add'] }}' class='bttn'>Add to DB</a>
-                            @endif
-                            @if (array_key_exists('delete', $file['urls']))
-                            <a href='{{ $file['urls']['delete'] }}' class='bttn'>Delete</a>
-                            @endif
-                            <span class='clear'></span>
                         </span>
+                        @if (array_key_exists('tus_key', $file))
+                        <span class='tuskeys'>
+                        <span class='bttns'>
+                                @if (array_key_exists('remove-upload-key', $file['urls']))
+                                <a href='{{ $file['urls']['remove-upload-key'] }}' class='bttn'>Remove upload key</a>
+                                @endif
+                                <span class='clear'></span>
+                            </span>
+                            <span class='keyvalue'><span>tus upload key</span><span>{{ $file['tus_key'] }}</span></span>
+                        </span>
+                        @endif
                     </span>
                 </li>
             @endforeach
             </ul>
-            </div>
-            <div>
-                <ul>
-                @foreach($list['keys'] as $key)
-                    <li>{{ $key['file'] }} -- {{ $key['key'] }} -- <a href='{{ $key['delete'] }}'>remove</a></li>
-                @endforeach
-                </ul>
             </div>
         @else
             <h1>Directory not found</h1>
@@ -272,9 +301,24 @@
 
         <!-- Expand / Collapse -->
         <script>
+            function isNameOkay(name){
+                if(!name.match(/^[a-zA-Z_\-0-9\s\(\)\?\[\]\{\}\!\@\?\.\`\~\#\$\%\^\&\*\=\+\|\<\>]+\.[a-zA-Z_\-0-9\s\(\)\?\[\]\{\}\!\@\?\.\`\~\#\$\%\^\&\*\=\+\|\<\>]{3,16}$/)) return false;
+                return true;
+            }
             $(function(){
                 $('.expand-file').click(function(e){
                     $(this).parent().parent().parent().toggleClass('show');
+                });
+                $('.bttn.rename').click(function(e){
+                    let url = $(this).attr('data-url');
+                    const original_name = $(this).attr('data-name');
+                    let name = '';
+                    do {
+                        name = prompt("Enter new name:", original_name);
+                        if(name === null) return;
+                    } while(!isNameOkay(name));
+
+                    location.href = url + "&name=" + name;
                 });
             });
         </script>

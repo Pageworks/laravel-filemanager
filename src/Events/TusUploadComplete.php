@@ -19,20 +19,30 @@ class TusUploadComplete
     public function __construct(TusEvent $tusEvent)
     {
         $this->tusEvent = $tusEvent;
-        
         $file = $this->tusEvent->getFile();
         
         (new ConsoleOutput())->writeln("upload complete ========");
-        // filename: file.mp4
-        (new ConsoleOutput())->writeln("name: {$file->getName()}");
-        // tus access: http://localhost:8000/tus/{key}
-        (new ConsoleOutput())->writeln("location: {$file->getLocation()}");
-        // absolute path: /Users/nick/Projects/uploader/storage/app/public/file.mp4
-        (new ConsoleOutput())->writeln("filepath: {$file->getFilePath()}");
-        
+       
+        $details = $file->details();
+        (new ConsoleOutput())->writeln("tusEvent->file->details() info:");
+        $this->dump($details);
 
+        // make model in db:
         $path = new FilePath($file->getFilePath());
         $model = $path->addToDB();
         (new ConsoleOutput())->writeln("added to db, id: {$model->id}");
+
+    }
+    protected function dump(array $arr, int $depth = 1){
+        foreach($arr as $key => $val){
+
+            $out = str_repeat(' ', 4 * $depth)."[{$key}] => ";
+            if(!is_array($val)) $out .= $val;
+            (new ConsoleOutput())->writeln($out);
+            
+            if(is_array($val)){
+                $this->dump($val, $depth + 1);
+            }
+        }
     }
 }

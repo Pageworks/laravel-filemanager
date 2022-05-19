@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
+use Pageworks\LaravelFileManager\FilePath;
 use Pageworks\LaravelFileManager\Http\Controllers\UploadController;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -15,6 +16,7 @@ Route::get('/files', [FileManageController::class, 'browse']);
 Route::get('/files/download', [FileManageController::class, 'download']);
 Route::get('/files/add', [FileManageController::class, 'add']);
 Route::get('/files/remove', [FileManageController::class, 'remove']);
+Route::get('/files/rename', [FileManageController::class, 'rename']);
 Route::get('/files/delete', [FileManageController::class, 'delete']);
 
 // tus & uploads:
@@ -28,7 +30,6 @@ Route::get('/files/uploads', function(){
     print('<pre>');
     print_r($keys);
     print('</pre>');
-
 
     foreach($keys as $key){
         $file = $cache->get($key, true);
@@ -47,14 +48,23 @@ Route::get('/files/uploads', function(){
 
 Route::get('/files/uploads/remove/{id}', function(Request $request, $id){
 
+    // get the tus casche
     $cache = app('tus-server')->getCache();
+
+    // find key in cache
+    $cached_file = $cache->get($id, true);
+
+    // find path to the referenced file; used for the redirect below
+    $path = new FilePath($cached_file['file_path']);
+
+    // delete the key
     $isDeleted = $cache->delete($id);
 
     if ( ! $isDeleted ) {
-        return response('File not found', HttpResponse::HTTP_GONE);
+        return response('Key not found', HttpResponse::HTTP_GONE);
     }
-
-    return redirect('/files/uploads');
+    // redirect
+    return redirect('/files?path='.$path->getDir());
 });
 Route::get('/files/uploads/delete/{id}', function(Request $request, $id){
     $cache = app('tus-server')->getCache();
