@@ -157,6 +157,7 @@ class FilePath
                     'urls' => [
                         'browse' => "/files?path={$relpath}",
                         'rename' => "/files/rename?path={$relpath}",
+                        'delete' => "/files/delete?path={$relpath}",
                     ],
                     'owner_name' => $os_owner_user['name'],
                     'owner_id' => $os_owner_id,
@@ -202,7 +203,7 @@ class FilePath
         return $this->isOutsideRoot() === false && is_file($this->path_abs);
     }
     public function getDir(){
-        return preg_replace('/\/[^\/]+$/', '/', $this->path_rel);
+        return preg_replace('/\/[^\/]+\/?$/', '/', $this->path_rel);
     }
     public function getDirAbs(){
         return preg_replace('/\/[^\/]+\/?$/', '/', $this->path_abs);
@@ -263,8 +264,12 @@ class FilePath
         return false;
     }
     public function delete(){
-        if(!$this->isFile()) return;
-        unlink($this->path_abs);
+        if($this->isFile()){
+            unlink($this->path_abs);
+        }
+        if($this->isDir()){
+            rmdir($this->path_abs);
+        }
     }
     protected function formatSize($size){
 

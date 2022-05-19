@@ -68,14 +68,44 @@ class FileManageController extends BaseController {
     }
     public function delete(Request $request){
         $path = new FilePath($request);
+        
+        if($path->isAtRoot() || $path->isOutsideRoot()) return response(['error' => 'not allowed'], 401);
         if($path->isFile()){
+            $path->delete();
+            return redirect('/files?path='.$path->getDir());
+        } 
+        else if($path->isDir()){
+
+            $files = array_diff(scandir($path->getPathAbsolute()), array('.','..'));
+            if(count($files) > 0) return response(['error' => 'directory not empty'], 403);
 
             $path->delete();
-
             return redirect('/files?path='.$path->getDir());
-        } else {
+        } 
+        else {
             return response(['error' => 'file not found'], 404);
         }
+    }
+    public function newdir(Request $request){
+        
+        $path = new FilePath($request);
+        if($path->isOutsideRoot()) return response(['error' => 'not allowed'], 401);
+        if(!$path->isDir()) return response(['error' => 'directory not found'], 404);
+        
+        $vals = $request->validate([
+            'name' => 'required|string|min:3|max:100',
+        ]);
+        
+        $dir = $path->getPathAbsolute() . $vals['name'];
+        
+        if(is_dir($dir) || is_file($dir)) return response(['error' => 'file exists'], 403);
+
+        (new ConsoleOutput())->writeln("attempting to make dir: ".$dir);
+
+        if(mkdir($dir)){
+            return redirect('/files?path='.$path->getDir());
+        }
+        return response(['error' => 'something bogus happened'], 403);
     }
     // renames a resource
     // $path->rename() is called
@@ -84,8 +114,11 @@ class FileManageController extends BaseController {
     // HOWEVER they are not currently updated...
     // this will result in orphaned rows
     public function rename(Request $request){
+
         $path = new FilePath($request);
         if($path->isFile() || $path->isDir()){
+
+            if($path->isAtRoot() || $path->isOutsideRoot()) return response(['error' => 'not allowed'], 401);
 
             $vals = $request->validate([
                 'name' => 'required|string|min:3|max:100',

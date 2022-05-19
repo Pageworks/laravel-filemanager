@@ -18,6 +18,7 @@ Route::get('/files/add', [FileManageController::class, 'add']);
 Route::get('/files/remove', [FileManageController::class, 'remove']);
 Route::get('/files/rename', [FileManageController::class, 'rename']);
 Route::get('/files/delete', [FileManageController::class, 'delete']);
+Route::get('/files/make', [FileManageController::class, 'newdir']);
 
 // tus & uploads:
 

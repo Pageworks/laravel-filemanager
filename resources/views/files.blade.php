@@ -46,7 +46,7 @@
                 font-weight:normal;
                 margin-top:5px;
             }
-            a.bttn, .UppyModalOpenerBtn {
+            a.bttn, button.bttn {
                 z-index:100;
                 background:#ccc;
                 padding:2px 5px;
@@ -162,7 +162,8 @@
         <div class='box-browse'>
             @if ($list)
             <hgroup>
-            <button class='UppyModalOpenerBtn'>Upload</button>
+            <button class='bttn UppyModalOpenerBtn'>Upload File</button>
+            <button class='bttn MakeFolderBtn'>Make Dir</button>
             <h1>{{$path->getPathRelative()}}</ h1>
             <h2>{{$path->getPathAbsolute()}}</h2>
             </hgroup>
@@ -352,6 +353,15 @@
                     } while(!isNameOkay(name));
 
                     location.href = url + "&name=" + name;
+                });
+                $('.bttn.MakeFolderBtn').click(function(e){
+                    const original_name = 'new folder';
+                    let name = '';
+                    do {
+                        name = prompt("Enter folder name:", original_name);
+                        if(name === null) return;
+                    } while(!isNameOkay(name));
+                    location.href = "http://localhost:8000/files/make?path={{$path->getPathRelative()}}&name=" + name;
                 });
             });
         </script>
