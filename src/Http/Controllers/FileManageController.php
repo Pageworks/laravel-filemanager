@@ -78,19 +78,21 @@ class FileManageController extends BaseController {
         }
     }
     // renames a resource
+    // $path->rename() is called
+    // if the resource is a directory and there are files within,
+    // those files SHOULD have any related models updated
+    // HOWEVER they are not currently updated...
+    // this will result in orphaned rows
     public function rename(Request $request){
         $path = new FilePath($request);
-        if($path->isFile()){
+        if($path->isFile() || $path->isDir()){
 
             $vals = $request->validate([
                 'name' => 'required|string|min:3|max:100',
             ]);
             $path->rename($vals['name']);
-
+            
             return redirect('/files?path='.$path->getDir());
-        }
-        if($path->isDir()) {
-            return redirect('/files?path='.$path->getPathRelative());
         }
         return response(['error' => 'file not found'], 404);
     }

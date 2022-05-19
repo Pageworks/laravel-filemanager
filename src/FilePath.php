@@ -150,7 +150,8 @@ class FilePath
                     'name' => $p,
                     'path' => $relpath,
                     'urls' => [
-                        'browse' => "/files?path={$relpath}"
+                        'browse' => "/files?path={$relpath}",
+                        'rename' => "/files/rename?path={$relpath}",
                     ],
                     'owner_name' => $os_owner_user['name'],
                     'owner_id' => $os_owner_id,
@@ -191,7 +192,7 @@ class FilePath
         return preg_replace('/\/[^\/]+$/', '/', $this->path_rel);
     }
     public function getDirAbs(){
-        return preg_replace('/\/[^\/]+$/', '/', $this->path_abs);
+        return preg_replace('/\/[^\/]+\/?$/', '/', $this->path_abs);
     }
     public function getFileName(){
         return preg_replace('/^.*\/([^\/]+)$/', '$1', $this->path_rel);
@@ -224,7 +225,13 @@ class FilePath
         ]);
     }
     public function rename($name){
-        if($this->isFile()){
+
+        if($this->isDir()){
+            // TODO: check for links in DB
+        }
+
+
+        if($this->isFile() || $this->isDir()){
 
             $newpath = $this->getDirAbs().$name;
 
@@ -238,9 +245,6 @@ class FilePath
                 $this->updateDB();
                 return true;
             }
-            return false;
-        }
-        if($this->isDir()) {
             return false;
         }
         return false;

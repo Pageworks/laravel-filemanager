@@ -175,10 +175,6 @@
                         <span><a class='bttn expand-file'>Details</a></span>
                     </span>
                     <span class="expand">
-                        <span class='meta'>
-                            <span class='keyvalue'><span>OS file owner</span><span>{{ $dir['owner_name'] }} ( {{ $dir['owner_id'] }} )</span></span>
-                            <span class='keyvalue'><span>Permissions</span><span>{{ $dir['permissions'] }}</span></span>
-                        </span>
                         <span class='bttns'>
                             @if (array_key_exists('rename', $dir['urls']))
                             <a class='bttn rename' data-name='{{ $dir['name'] }}' data-url='{{ $dir['urls']['rename'] }}'>Rename</a>
@@ -187,6 +183,10 @@
                             <a href='{{ $dir['urls']['delete'] }}' class='bttn'>Delete</a>
                             @endif
                             <span class='clear'></span>
+                        </span>
+                        <span class='meta'>
+                            <span class='keyvalue'><span>OS file owner</span><span>{{ $dir['owner_name'] }} ( {{ $dir['owner_id'] }} )</span></span>
+                            <span class='keyvalue'><span>Permissions</span><span>{{ $dir['permissions'] }}</span></span>
                         </span>
                     </span>
                 </li>
@@ -302,7 +302,8 @@
         <!-- Expand / Collapse -->
         <script>
             function isNameOkay(name){
-                if(!name.match(/^[a-zA-Z_\-0-9\s\(\)\?\[\]\{\}\!\@\?\.\`\~\#\$\%\^\&\*\=\+\|\<\>]+\.[a-zA-Z_\-0-9\s\(\)\?\[\]\{\}\!\@\?\.\`\~\#\$\%\^\&\*\=\+\|\<\>]{3,16}$/)) return false;
+                //if(!name.match(/^[a-zA-Z_\-0-9\s\(\)\?\[\]\{\}\!\@\?\.\`\~\#\$\%\^\&\*\=\+\|\<\>]+\.[a-zA-Z_\-0-9\s\(\)\?\[\]\{\}\!\@\?\.\`\~\#\$\%\^\&\*\=\+\|\<\>]{3,16}$/)) return false;
+                if(!name.match(/^[^\/\\]+$/)) return false;
                 return true;
             }
             $(function(){

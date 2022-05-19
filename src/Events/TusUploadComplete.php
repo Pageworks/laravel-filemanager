@@ -25,7 +25,7 @@ class TusUploadComplete
        
         $details = $file->details();
         (new ConsoleOutput())->writeln("tusEvent->file->details() info:");
-        $this->dump($details);
+        $this->dumpToConsole($details);
 
         // make model in db:
         $path = new FilePath($file->getFilePath());
@@ -33,7 +33,7 @@ class TusUploadComplete
         (new ConsoleOutput())->writeln("added to db, id: {$model->id}");
 
     }
-    protected function dump(array $arr, int $depth = 1){
+    protected function dumpToConsole(array $arr, int $depth = 1){
         foreach($arr as $key => $val){
 
             $out = str_repeat(' ', 4 * $depth)."[{$key}] => ";
@@ -41,7 +41,7 @@ class TusUploadComplete
             (new ConsoleOutput())->writeln($out);
             
             if(is_array($val)){
-                $this->dump($val, $depth + 1);
+                $this->dumpToConsole($val, $depth + 1);
             }
         }
     }
