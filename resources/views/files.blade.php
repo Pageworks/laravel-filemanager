@@ -255,6 +255,38 @@
             @endforeach
             </ul>
             </div>
+            @if (count($list['orphaned_models']) > 0)
+            <div class='box-browse'>
+                <hgroup>
+                    <h1>Orphaned models</h1>
+                </hgroup>
+                <ul class='list-files'>
+                    @foreach($list['orphaned_models'] as $model)
+                    <li class='file'>
+                    <span class='bar'>
+                        <a class='label'>{{ $model['file_name'] }}</a>
+                        <span><a class='bttn expand-file'>Details</a></span>
+                    </span>
+                    <span class="expand">
+                        <span class='model'>
+                            <span class='bttns'>
+                                @if (array_key_exists('remove', $model['urls']))
+                                <a href='{{ $model['urls']['remove'] }}' class='bttn'>Remove from DB</a>
+                                @endif
+                                <span class='clear'></span>
+                            </span>
+                            @foreach($model as $field=>$value)
+                                @if (!is_array($value))
+                                <span class='keyvalue'><span>{{ $field }}</span><span>{{ $value }}</span></span>
+                                @endif
+                            @endforeach
+                        </span>
+                    </span>
+                    </li>
+                    @endforeach
+                </ul>
+            </div>
+            @endif
         @else
             <h1>Directory not found</h1>
             <h2><a href='/files'>Back to /</h2>

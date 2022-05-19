@@ -55,6 +55,7 @@ class FilePath
 
         // search db for files:
         $files_in_db = File::where('dir_path','=',$this->path_rel)->get();
+        $models = $files_in_db->toArray();
 
         // search redis for files:
         $cache = app('tus-server')->getCache();
@@ -109,18 +110,22 @@ class FilePath
                 }
 
                 // look in db collection using the file path:
-                $file_model = $files_in_db->firstWhere('file_path', $relpath);
-                if($file_model){
-                    $data['model'] = $file_model->toArray();
+                $file_model = null;
+                foreach($models as $i => $m){
+                    if($m['file_path']==$relpath){
+                        $file_model = $m;
+                        $data['model'] = $m;
+                        unset($models[$i]);
+                        break;
+                    }
                 }
 
                 // build urls for hateoas
                 $urls = [];
                 $lookup = '';
-
                 
                 if($file_model){
-                    $lookup = "id={$file_model->id}";
+                    $lookup = "id={$file_model['id']}";
                     $urls['remove'] = "/files/remove?{$lookup}";
                 } else {
                     $lookup = "path={$relpath}";
@@ -160,9 +165,17 @@ class FilePath
             }
         }
 
+        
+        foreach($models as &$model){
+            $model['urls'] = [
+                'remove' => "files/remove?id={$model['id']}",
+            ];
+        }
+
         return [
             'dirs' => $dirs,
             'files' => $files,
+            'orphaned_models' => $models,
         ];
     }
     public function getSize(){
