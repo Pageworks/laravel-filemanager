@@ -20,6 +20,7 @@ class FilePath
 
     public function __construct(string|Request $request = '.')
     {
+
         if(is_string($request)) {
             $request_path = $request;
         }
@@ -73,6 +74,7 @@ class FilePath
         $paths = scandir($this->path_abs);
         $files = [];
         $dirs = [];
+
         foreach($paths as $p){
             $fullpath = $this->path_abs.DIRECTORY_SEPARATOR.$p;
             $relpath = str_replace($this->path_root, '', realpath($fullpath));
@@ -120,26 +122,11 @@ class FilePath
                     }
                 }
 
-                // build urls for hateoas
-                $urls = [];
-                $lookup = '';
-                
-                if($file_model){
-                    $lookup = "id={$file_model['id']}";
-                    $urls['remove'] = "/files/remove?{$lookup}";
-                } else {
-                    $lookup = "path={$relpath}";
-                    $urls['add'] = "/files/add?{$lookup}";
-                }
-                if(array_key_exists('tus_key', $data)){
-                    $urls['remove-upload-key'] = "/files/uploads/remove/{$data['tus_key']}";
-                }
-                
-                $urls['download'] = "/files/download?{$lookup}";
-                $urls['delete'] = "/files/delete?{$lookup}";
-                $urls['rename'] = "/files/rename?{$lookup}";
+                // build look-up parameter:
 
-                $data['urls'] = $urls;
+                $data['lookup'] = ($file_model) ? "id={$file_model['id']}" : "path={$relpath}";
+
+                // insert file-data into list of files:
 
                 $files []= $data;
 
@@ -154,23 +141,12 @@ class FilePath
                 $dirs [$p]= [
                     'name' => $p,
                     'path' => $relpath,
-                    'urls' => [
-                        'browse' => "/files?path={$relpath}",
-                        'rename' => "/files/rename?path={$relpath}",
-                        'delete' => "/files/delete?path={$relpath}",
-                    ],
+                    'lookup' => "path={$relpath}",
                     'owner_name' => $os_owner_user['name'],
                     'owner_id' => $os_owner_id,
                     'permissions' => $os_permissions,
                 ];
             }
-        }
-
-        
-        foreach($models as &$model){
-            $model['urls'] = [
-                'remove' => "files/remove?id={$model['id']}",
-            ];
         }
 
         return [
@@ -247,13 +223,16 @@ class FilePath
 
         if($this->isFile() || $this->isDir()){
 
-            $newpath = $this->getDirAbs().$name;
+            $newurl = $this->getDirAbs().$name;
 
-            if(rename($this->getPathAbsolute(), $newpath)){
+            $newpath = new FilePath($newurl);
+            if($newpath->isFile() || $newpath->isDir()) return false;
+
+            if(rename($this->getPathAbsolute(), $newurl)){
 
                 $this->getModel();
 
-                $this->path_abs = $newpath;
+                $this->path_abs = $newurl;
                 $this->path_rel = str_replace($this->path_root, '', $this->path_abs);
 
                 $this->updateDB();

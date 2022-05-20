@@ -54,10 +54,12 @@
                 font-size:75%;
                 text-decoration:none;
                 border:1px solid rgba(0,0,0,.25);
-                float:right;
                 white-space: nowrap;
                 margin:0 0 0 5px;
                 cursor:pointer;
+            }
+            a.bttn.right, button.bttn.right {
+                float:right;
             }
             a.bttn:hover {
                 border:1px solid #000;
@@ -159,30 +161,29 @@
 </style>
     </head>
     <body class="antialiased">
+        @if (isset($list))
         <div class='box-browse'>
-            @if ($list)
             <hgroup>
-            <button class='bttn UppyModalOpenerBtn'>Upload File</button>
-            <button class='bttn MakeFolderBtn'>Make Dir</button>
-            <h1>{{$path->getPathRelative()}}</ h1>
-            <h2>{{$path->getPathAbsolute()}}</h2>
+            <button class='bttn UppyModalOpenerBtn right'>Upload File</button>
+            <button class='bttn MakeFolderBtn right'>Make Dir</button>
+            <h1>{{$path}}</ h1>
+            <h2>{{$pathAbs}}</h2>
             </hgroup>
 
             <ul class='list-dirs'>
             @foreach ($list['dirs'] as $dir)
                 <li>
                     <span class='bar'>
-                        <a href='{{ $dir['urls']['browse'] }}' class='label'>{{ $dir['name'] }}</a>
+                        <a href='{{ $baseUrl }}/browse?{{ $dir['lookup'] }}' class='label'>{{ $dir['name'] }}</a>
+                        @if ($dir['name'] != '..')
                         <span><a class='bttn expand-file'>Details</a></span>
+                        @endif
                     </span>
+                    @if ($dir['name'] != '..')
                     <span class="expand">
                         <span class='bttns'>
-                            @if (array_key_exists('rename', $dir['urls']))
-                            <a class='bttn rename' data-name='{{ $dir['name'] }}' data-url='{{ $dir['urls']['rename'] }}'>Rename</a>
-                            @endif
-                            @if (array_key_exists('delete', $dir['urls']))
-                            <a href='{{ $dir['urls']['delete'] }}' class='bttn'>Delete</a>
-                            @endif
+                            <a class='bttn rename right' data-name='{{ $dir['name'] }}' data-url='{{ $baseUrl }}/rename?{{ $dir['lookup'] }}'>Rename</a>
+                            <a href='{{ $baseUrl }}/delete?{{ $dir['lookup'] }}' class='bttn right'>Delete</a>
                             <span class='clear'></span>
                         </span>
                         <span class='meta'>
@@ -190,6 +191,7 @@
                             <span class='keyvalue'><span>Permissions</span><span>{{ $dir['permissions'] }}</span></span>
                         </span>
                     </span>
+                    @endif
                 </li>
             @endforeach
             </ul>
@@ -198,19 +200,15 @@
             @foreach($list['files'] as $file)
                 <li class='file'>
                     <span class='bar'>
-                        <a href='{{ $file['urls']['download'] }}' class='label'>{{ $file['name'] }}</a>
+                        <a href='{{ $baseUrl }}/download?{{ $file['lookup'] }}' class='label'>{{ $file['name'] }}</a>
                         <span class='size'>{{ $file['size'] }}</span>
                         <span><a class='bttn expand-file'>Details</a></span>
                     </span>
                     <span class="expand">
                         <span class='meta'>
                             <span class='bttns'>
-                                @if (array_key_exists('rename', $file['urls']))
-                                <a class='bttn rename' data-name='{{ $file['name'] }}' data-url='{{ $file['urls']['rename'] }}'>Rename</a>
-                                @endif
-                                @if (array_key_exists('delete', $file['urls']))
-                                <a href='{{ $file['urls']['delete'] }}' class='bttn'>Delete</a>
-                                @endif
+                                <a class='bttn rename right' data-name='{{ $file['name'] }}' data-url='{{ $baseUrl }}/rename?{{ $file['lookup'] }}'>Rename</a>
+                                <a href='{{ $baseUrl }}/delete?{{ $file['lookup'] }}' class='bttn right'>Delete</a>
                                 <span class='clear'></span>
                             </span>
                             <span class='keyvalue'><span>Filename</span><span>{{ $file['name'] }}</span></span>
@@ -226,11 +224,10 @@
                         </span>
                         <span class='model'>
                             <span class='bttns'>
-                                @if (array_key_exists('remove', $file['urls']))
-                                <a href='{{ $file['urls']['remove'] }}' class='bttn'>Remove from DB</a>
-                                @endif
-                                @if (array_key_exists('add', $file['urls']))
-                                <a href='{{ $file['urls']['add'] }}' class='bttn'>Add to DB</a>
+                                @if (array_key_exists('model', $file))
+                                <a href='{{ $baseUrl }}/remove?{{ $file['lookup'] }}' class='bttn right'>Remove from DB</a>
+                                @else
+                                <a href='{{ $baseUrl }}/add?{{ $file['lookup'] }}' class='bttn right'>Add to DB</a>
                                 @endif
                                 <span class='clear'></span>
                             </span>
@@ -243,9 +240,7 @@
                         @if (array_key_exists('tus_key', $file))
                         <span class='tuskeys'>
                         <span class='bttns'>
-                                @if (array_key_exists('remove-upload-key', $file['urls']))
-                                <a href='{{ $file['urls']['remove-upload-key'] }}' class='bttn'>Remove upload key</a>
-                                @endif
+                                <a href='{{ $baseUrl }}/uploads/remove/{{ $file['tus_key'] }}' class='bttn right'>Remove upload key</a>
                                 <span class='clear'></span>
                             </span>
                             <span class='keyvalue'><span>tus upload key</span><span>{{ $file['tus_key'] }}</span></span>
@@ -271,9 +266,7 @@
                     <span class="expand">
                         <span class='model'>
                             <span class='bttns'>
-                                @if (array_key_exists('remove', $model['urls']))
-                                <a href='{{ $model['urls']['remove'] }}' class='bttn'>Remove from DB</a>
-                                @endif
+                                <a href='{{ $baseUrl }}/remove?id={{ $model['id'] }}' class='bttn'>Remove from DB</a>
                                 <span class='clear'></span>
                             </span>
                             @foreach($model as $field=>$value)
@@ -288,9 +281,14 @@
                 </ul>
             </div>
             @endif
+        </div>
         @else
+        <div class='box-browse'>
+            <hgroup>
             <h1>Directory not found</h1>
-            <h2><a href='/files'>Back to /</h2>
+            <div><a href='{{ $baseUrl }}/browse' class='bttn'>Back to /</a></div>
+            </hgroup>
+        </div>
         @endif
         
         <div class='DashboardContainer'></div>
@@ -327,7 +325,7 @@
                     maxFileSize: 1000000 // ~10MB
                 }
             }).use(Uppy.Tus, {
-                endpoint: 'http://localhost:8000/files/tus?path={{$path->getPathRelative()}}',
+                endpoint: '{{ $baseUrl }}/tus?path={{$path}}',
                 chunkSize: 10000000 // ~10MB
             });
         </script>
@@ -361,7 +359,7 @@
                         name = prompt("Enter folder name:", original_name);
                         if(name === null) return;
                     } while(!isNameOkay(name));
-                    location.href = "http://localhost:8000/files/make?path={{$path->getPathRelative()}}&name=" + name;
+                    location.href = "{{ $baseUrl }}/make?path={{$path}}&name=" + name;
                 });
             });
         </script>

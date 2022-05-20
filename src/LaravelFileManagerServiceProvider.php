@@ -10,6 +10,8 @@ use Pageworks\LaravelFileManager\Events\TusUploadStart;
 use Pageworks\LaravelFileManager\Events\TusUploadProgress;
 use Pageworks\LaravelFileManager\Events\TusUploadMerged;
 use Pageworks\LaravelFileManager\Events\TusUploadComplete;
+use Pageworks\LaravelFileManager\Interfaces\FileRepositoryInterface;
+use Pageworks\LaravelFileManager\Repositories\FileRepository;
 
 class LaravelFileManagerServiceProvider extends ServiceProvider
 {
@@ -29,6 +31,9 @@ class LaravelFileManagerServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/laravel-filemanager.php', 'laravel-filemanager');
 
+        // default FileRepositoryInterface is FileRepository
+        $this->app->bind(FileRepositoryInterface::class, FileRepository::class);
+
         // write file cache settings
  
         \TusPhp\Config::set([
@@ -46,7 +51,7 @@ class LaravelFileManagerServiceProvider extends ServiceProvider
             
             $server = new TusServer('file');
             
-            $server->setApiPath('/files/tus'); // tus server endpoint.
+            $server->setApiPath(config('laravel-filemanager.head.prefix', '/file-manager').'/tus'); // tus server endpoint.
             $server->setUploadDir(storage_path('app/public'));
 
             $server->event()->addListener('tus-server.upload.created', function(TusEvent $e){ event(new TusUploadStart($e)); });

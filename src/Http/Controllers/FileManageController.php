@@ -7,105 +7,101 @@ use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Pageworks\LaravelFileManager\FilePath;
+use Pageworks\LaravelFileManager\Interfaces\FileRepositoryInterface;
+use Pageworks\LaravelFileManager\Repositories\FileRepository;
 use Symfony\Component\Console\Output\ConsoleOutput;
+
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class FileManageController extends BaseController {
     
+    private FileRepositoryInterface $repo;
+
+    public function __construct(FileRepositoryInterface $repo) 
+    {
+        $this->repo = $repo;
+    }
+    /**
+     * If API request, a JSON response is sent. Otherwise, a blade
+     * view is rendered and returned instead.
+     *
+     * @param Request $request
+     * @param Response $response
+     * @return void
+     */
+    protected function responseOrView(Request $request, Response $response){
+
+        // send JSON:
+        if(!$request->acceptsHtml()) return $response;
+
+        // send HTML view:
+        $vals = $response->getOriginalContent();
+        $vals['baseUrl'] = config('laravel-filemanager.head.prefix', '/file-manager');
+        return view('laravel-filemanager::files', $vals);
+    }
+    /**
+     * If API request, a JSON response is sent. Otherwise, the user
+     * is redirected to a blade view.
+     *
+     * @param Request $request
+     * @param Response $response
+     * @return void
+     */
+    protected function responseOrRedirect(Request $request, Response $response, string $overridePath = ""){
+        
+        // send JSON:
+        if(!$request->acceptsHtml()) return $response;
+        
+        // redirect to HTML view:
+        $path = $overridePath ? $overridePath : (new FilePath($request))->getDir();
+        $prefix = config('laravel-filemanager.head.prefix', '/file-manager');
+        return redirect("{$prefix}/browse?path={$path}");
+    }
 
     // shows files and folders within a directory
     public function browse(Request $request)
     {
         $path = new FilePath($request);
-        if($path->isDir()){
-            $list = $path->getListFiles();
-
-            return view('laravel-filemanager::files', [
-                'list' => $list,
-                'path' => $path,
-            ]);
-        } else {
-            // path->isDir() also checks whether directory is within the root directory
-            
-            return response("<h1>Directory not found</h1><h2><a href='/files'>Back to /</h2>", 404);
-        }
-    }
-    // downloads a file
-    public function download(Request $request){
-        $path = new FilePath($request);
-
         if($path->isFile()){
-            return response()->download($path->getPathAbsolute());
-        } else {
-            return response(['error' => 'file not found'], 404);
+            return $this->repo->downloadFile($path);
         }
+        $response = $this->repo->listItemsInDir($path);
+        return $this->responseOrView($request, $response);
     }
     // adds a file to the database, only meta-data
     public function add(Request $request){
         $path = new FilePath($request);
-        if($path->isFile()){
+        
+        $response = $this->repo->addModel($path);
 
-            $file = $path->addToDB();
-
-            return redirect('/files?path='.$file->dir_path);
-        } else {
-            return response(['error' => 'file not found'], 404);
-        }
+        return $this->responseOrRedirect($request, $response);
     }
     // removes a file from the database, does not delete the file
     public function remove(Request $request){
-        $id = $request->input("id");
-        $file = File::find($id);
-        if($file){
 
-            $redirect = $file->dir_path;
-            // remove from database:
-            $file->delete();
+        $path = new FilePath($request);
+        $file = $path->getModel();
 
-            return redirect('/files?path='.$redirect);
-        } else {
-            return response(['error' => 'file not found'], 404);
-        }
+        $response = $this->repo->removeModel($file);
+
+        $path = $file ? $file->dir_path : '/';
+        return $this->responseOrRedirect($request, $response, $path);
     }
     public function delete(Request $request){
         $path = new FilePath($request);
         
-        if($path->isAtRoot() || $path->isOutsideRoot()) return response(['error' => 'not allowed'], 401);
-        if($path->isFile()){
-            $path->delete();
-            return redirect('/files?path='.$path->getDir());
-        } 
-        else if($path->isDir()){
-
-            $files = array_diff(scandir($path->getPathAbsolute()), array('.','..'));
-            if(count($files) > 0) return response(['error' => 'directory not empty'], 403);
-
-            $path->delete();
-            return redirect('/files?path='.$path->getDir());
-        } 
-        else {
-            return response(['error' => 'file not found'], 404);
-        }
+        $response = $this->repo->deleteFile($path);
+        return $this->responseOrRedirect($request, $response, $path->getDir());
     }
     public function newdir(Request $request){
         
         $path = new FilePath($request);
-        if($path->isOutsideRoot()) return response(['error' => 'not allowed'], 401);
-        if(!$path->isDir()) return response(['error' => 'directory not found'], 404);
-        
         $vals = $request->validate([
             'name' => 'required|string|min:3|max:100',
         ]);
+        $response = $this->repo->makeDir($path, $vals['name']);
         
-        $dir = $path->getPathAbsolute() . $vals['name'];
-        
-        if(is_dir($dir) || is_file($dir)) return response(['error' => 'file exists'], 403);
-
-        (new ConsoleOutput())->writeln("attempting to make dir: ".$dir);
-
-        if(mkdir($dir)){
-            return redirect('/files?path='.$path->getDir());
-        }
-        return response(['error' => 'something bogus happened'], 403);
+        return $this->responseOrRedirect($request, $response, $path->getPathRelative());
     }
     // renames a resource
     // $path->rename() is called
@@ -116,17 +112,66 @@ class FileManageController extends BaseController {
     public function rename(Request $request){
 
         $path = new FilePath($request);
-        if($path->isFile() || $path->isDir()){
+        $vals = $request->validate([
+            'name' => 'required|string|min:3|max:100',
+        ]);
+        $response = $this->repo->rename($path, $vals['name']);
 
-            if($path->isAtRoot() || $path->isOutsideRoot()) return response(['error' => 'not allowed'], 401);
+        return $this->responseOrRedirect($request, $response, $path->getDir());
+    }
+    public function tusUploads(){
+        $cache = app('tus-server')->getCache();
+        $keys = $cache->keys();
 
-            $vals = $request->validate([
-                'name' => 'required|string|min:3|max:100',
-            ]);
-            $path->rename($vals['name']);
-            
-            return redirect('/files?path='.$path->getDir());
+        echo "<h2>Files in tus cache:</h2>";
+
+        print('<pre>');
+        print_r($keys);
+        print('</pre>');
+
+        $baseUrl = config('laravel-filemanager.head.prefix', '/file-manager');
+
+        foreach($keys as $key){
+            $file = $cache->get($key, true);
+            echo "<div>";
+            echo "<p><b>{$key}</b></p>";
+            echo "<ul>";
+            echo "<li>{$file['name']}</li>";
+            echo "<li>{$file['file_path']}</li>";
+            echo "<li>{$file['metadata']['type']}</li>";
+            echo "<li><a href='{$baseUrl}/uploads/remove/{$key}'>Delete key</a></li>";
+            echo "<li><a href='{$baseUrl}/uploads/delete/{$key}'>Delete key AND file</a></li>";
+            echo "</ul>";
+            echo "</div>";
         }
-        return response(['error' => 'file not found'], 404);
+    }
+    public function tusUpload(Request $request){
+
+        $path = new FilePath($request);
+
+        if($path->isDir()){
+            $server = app('tus-server');
+            $server->setUploadDir(rtrim($path->getPathAbsolute(), '/'));
+            $server->serve()->send();
+        }
+    }
+    public function tusDownload(){
+        return app('tus-server')->serve()->send();
+    }
+    public function tusRemove(Request $request, $id){
+        // get the tus casche
+        $cache = app('tus-server')->getCache();
+
+        // find key in cache
+        $cached_file = $cache->get($id, true);
+
+        // delete the key
+        $isDeleted = $cache->delete($id);
+
+        $response = $isDeleted ? response([], 200) : response('Key not found', HttpResponse::HTTP_GONE);
+        $path = $isDeleted ? (new FilePath($cached_file['file_path']))->getDir() : '/';
+
+        // redirect
+        return $this->responseOrRedirect($request, $response, $path);
     }
 }
