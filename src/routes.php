@@ -28,11 +28,19 @@ if(config('laravel-filemanager.head.routes', true)){
 }
 
 if(config('laravel-filemanager.api.routes', true)){
+
+    if(config('laravel-filemanager.api.view', true)){
+        Route::view('/upload', 'laravel-filemanager::upload', [
+            'baseUrl' => 'http://localhost:8000'.config('laravel-filemanager.api.prefix', '/api/v1/file-manager'),
+            'path' => '/',
+        ]);
+    }
+
     Route::group([
         'middleware' => config('laravel-filemanager.api.middleware', []),
-        'prefix' => config('laravel-filemanager.api.prefix', '/api/v1'),
+        'prefix' => config('laravel-filemanager.api.prefix', '/api/v1/file-manager'),
     ], function($router) {
-        
+
         // file browsing:
         Route::get('/browse', [FileManageController::class, 'browse']);
         Route::post('/files/model', [FileManageController::class, 'add']);

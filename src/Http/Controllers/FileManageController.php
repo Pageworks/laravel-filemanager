@@ -21,6 +21,21 @@ class FileManageController extends BaseController {
     {
         $this->repo = $repo;
     }
+    protected function getConfiguredTusServer(Request $request){
+        $server = app('tus-server');
+        
+        // The server sends the client a URL endpoint:
+        // either /file-manager/tus or /api/v1/file-manager/tus
+        // Here we determine what endpoint to send to the client
+
+        // It seems silly to have two different endpoints, but
+        // this gives us the most flexiblity w/ the config file.
+
+        $config_type = ($request->is('api/*')) ? 'api' : 'head';
+        $server->setApiPath(config("laravel-filemanager.{$config_type}.prefix", '/file-manager').'/tus'); // tus server endpoint
+        
+        return $server;
+    }
     /**
      * If API request, a JSON response is sent. Otherwise, a blade
      * view is rendered and returned instead.
@@ -150,17 +165,17 @@ class FileManageController extends BaseController {
         $path = new FilePath($request);
 
         if($path->isDir()){
-            $server = app('tus-server');
+            $server = $this->getConfiguredTusServer($request);
             $server->setUploadDir(rtrim($path->getPathAbsolute(), '/'));
             $server->serve()->send();
         }
     }
-    public function tusDownload(){
-        return app('tus-server')->serve()->send();
+    public function tusDownload(Request $request){
+        return $this->getConfiguredTusServer($request)->serve()->send();
     }
     public function tusRemove(Request $request, $id){
-        // get the tus casche
-        $cache = app('tus-server')->getCache();
+        // get the tus cache
+        $cache = $this->getConfiguredTusServer($request)->getCache();
 
         // find key in cache
         $cached_file = $cache->get($id, true);

@@ -1,14 +1,25 @@
 <?php
 
 return [
-    'head' => [
-        'routes' => true,
-        'prefix' => '/file-manager',
-        'middleware' => [],
-    ],
+    /**
+     * Settings for the api-based endpoints.
+     */
     'api' => [
         'routes' => true,
         'prefix' => '/api/v1/file-manager',
-        'middleware' => [],
-    ]
+        'middleware' => [
+            'api'
+        ],
+        'view' => true,
+    ],
+    /**
+     * Settings for the web-based endpoints.
+     */
+    'head' => [
+        'routes' => false,
+        'prefix' => '/file-manager',
+        'middleware' => [
+            'web'
+        ],
+    ],
 ];
