@@ -12,7 +12,7 @@ if(config('laravel-filemanager.head.routes', true)){
         // file browsing:
 
         Route::get('/browse', [FileManageController::class, 'browse']);
-        Route::get('/download', [FileManageController::class, 'download']);
+        Route::get('/download', [FileManageController::class, 'browse']);
         Route::get('/add', [FileManageController::class, 'add']);
         Route::get('/remove', [FileManageController::class, 'remove']);
         Route::get('/rename', [FileManageController::class, 'rename']);
