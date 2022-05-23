@@ -301,20 +301,6 @@
         <script>
             const upz = new Uppy.Core({debug:true}).use(Uppy.Dashboard, {
                 debug:true,
-                onBeforeUpload: (files) => {
-                    
-                    //const token = $("#input-csrf").val();
-                    const updatedFiles = Object.assign({}, files);
-                    
-                    Object.keys(updatedFiles).forEach(fileId => {
-                        updatedFiles[fileId].tus = {
-                            headers: {
-                                'Accept': 'application/json'
-                            }
-                        };
-                    });
-                    return updatedFiles;
-                },
                 inline: false,
                 trigger: '.UppyModalOpenerBtn',
                 target: '.DashboardContainer',
@@ -326,14 +312,21 @@
                 }
             }).use(Uppy.Tus, {
                 endpoint: '{{ $baseUrl }}/tus?path={{$path}}',
-                chunkSize: 10000000 // ~10MB
+                chunkSize: 10000000, // ~10MB
+                headers:(file) => {
+                    const token = $("#input-token").val();
+                    console.log('headers updated...');
+                    return {
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer '+token
+                    }
+                },
             });
         </script>
 
         <!-- Expand / Collapse -->
         <script>
             function isNameOkay(name){
-                //if(!name.match(/^[a-zA-Z_\-0-9\s\(\)\?\[\]\{\}\!\@\?\.\`\~\#\$\%\^\&\*\=\+\|\<\>]+\.[a-zA-Z_\-0-9\s\(\)\?\[\]\{\}\!\@\?\.\`\~\#\$\%\^\&\*\=\+\|\<\>]{3,16}$/)) return false;
                 if(!name.match(/^[^\/\\]+$/)) return false;
                 return true;
             }

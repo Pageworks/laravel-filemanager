@@ -47,21 +47,6 @@
         <script>
             const upz = new Uppy.Core({debug:true}).use(Uppy.Dashboard, {
                 debug:true,
-                onBeforeUpload: (files) => {
-                    
-                    const token = $("#input-token").val();
-                    const updatedFiles = Object.assign({}, files);
-                    
-                    Object.keys(updatedFiles).forEach(fileId => {
-                        updatedFiles[fileId].tus = {
-                            headers: {
-                                'Accept': 'application/json',
-                                'Authorization': 'Bearer '+token
-                            }
-                        };
-                    });
-                    return updatedFiles;
-                },
                 inline: true,
                 target: '.DashboardContainer',
                 showProgressDetails: true,
@@ -72,7 +57,15 @@
                 }
             }).use(Uppy.Tus, {
                 endpoint: '{{ $baseUrl }}/tus?path={{$path}}',
-                chunkSize: 10000000 // ~10MB
+                chunkSize: 10000000, // ~10MB
+                headers:(file) => {
+                    const token = $("#input-token").val();
+                    console.log('headers updated...');
+                    return {
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer '+token
+                    }
+                },
             });
         </script>
 
