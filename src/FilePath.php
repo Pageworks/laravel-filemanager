@@ -18,6 +18,28 @@ class FilePath
 
     protected $model = null;
 
+    public static function root() : string {
+        return storage_path("app/public");
+    }
+    protected static function url_in_dir($item_path, $dir_path){
+
+        $needle = FilePath::dir_of_path($item_path);
+        $haystack = preg_replace('/\/{2,}/', '/', strtolower($dir_path));
+
+        if($haystack == $needle){
+            return true;
+        }
+        return false;
+    }
+    protected static function dir_of_path($url){
+        $url = strtolower(preg_replace('/^(.+)\/[^\/]+$/', '/$1/', $url));
+        $url = preg_replace('/\/{2,}/', '/', $url);
+        return $url;
+    }
+    public static function relative_path($url){
+        $url = FilePath::dir_of_path($url);
+        return str_ireplace(FilePath::root(), '', $url);
+    }
     public function __construct(string|Request $request = '.')
     {
 
@@ -30,7 +52,7 @@ class FilePath
         }
         else $request_path = $request->input('path') ?? '.';
 
-        $this->path_root = storage_path("app/public");
+        $this->path_root = FilePath::root();
         
         if(strpos($request_path, $this->path_root) === 0){
             $this->path_abs = realpath($request_path);
@@ -62,11 +84,13 @@ class FilePath
         $cache = app('tus-server')->getCache();
         $keys = $cache->keys();
         $keys_in_dir = [];
+        $keys_files = [];
         foreach($keys as $key){
             $file = $cache->get($key, true);
-            $temp = new FilePath($file['file_path']);
-            if($temp->getDir() == $this->path_rel)
+            if(FilePath::url_in_dir($file['file_path'], $this->getPathAbsolute())){
                 $keys_in_dir [$file['name']] = $key;
+                $keys_files[$key] = $file;
+            }
         }
 
         // search the directory:
@@ -109,6 +133,8 @@ class FilePath
                 // look in list of keys:
                 if(array_key_exists($p, $keys_in_dir)){
                     $data['tus_key'] = $keys_in_dir[$p];
+                    unset($keys_files[$keys_in_dir[$p]]);
+                    unset($keys_in_dir[$p]);
                 }
 
                 // look in db collection using the file path:
@@ -123,11 +149,9 @@ class FilePath
                 }
 
                 // build look-up parameter:
-
                 $data['lookup'] = ($file_model) ? "id={$file_model['id']}" : "path={$relpath}";
 
                 // insert file-data into list of files:
-
                 $files []= $data;
 
             } else {
@@ -153,6 +177,7 @@ class FilePath
             'dirs' => $dirs,
             'files' => $files,
             'orphaned_models' => $models,
+            'orphaned_tuskeys' => $keys_files,
         ];
     }
     public function getSize(){

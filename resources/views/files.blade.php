@@ -120,7 +120,7 @@
                 flex-grow: 1;
                 min-width: 0;
             }
-            .model, .tuskeys {
+            span + .model, span + .tuskeys {
                 border-top:1px solid #999;
                 padding-top:20px;
                 margin-top:15px;
@@ -270,6 +270,36 @@
                                 <span class='clear'></span>
                             </span>
                             @foreach($model as $field=>$value)
+                                @if (!is_array($value))
+                                <span class='keyvalue'><span>{{ $field }}</span><span>{{ $value }}</span></span>
+                                @endif
+                            @endforeach
+                        </span>
+                    </span>
+                    </li>
+                    @endforeach
+                </ul>
+            </div>
+            @endif
+            @if (count($list['orphaned_tuskeys']) > 0)
+            <div class='box-browse'>
+                <hgroup>
+                    <h1>Orphaned tus-keys</h1>
+                </hgroup>
+                <ul class='list-files'>
+                    @foreach($list['orphaned_tuskeys'] as $key => $file)
+                    <li class='file'>
+                    <span class='bar'>
+                        <a class='label'>{{ $file['name'] }}</a>
+                        <span><a class='bttn expand-file'>Details</a></span>
+                    </span>
+                    <span class="expand">
+                        <span class='tuskeys'>
+                            <span class='bttns'>
+                                <a href='{{ $baseUrl }}/uploads/remove/{{ $key }}' class='bttn'>Remove upload key</a>
+                                <span class='clear'></span>
+                            </span>
+                            @foreach($file as $field=>$value)
                                 @if (!is_array($value))
                                 <span class='keyvalue'><span>{{ $field }}</span><span>{{ $value }}</span></span>
                                 @endif

@@ -184,7 +184,7 @@ class FileManageController extends BaseController {
         $isDeleted = $cache->delete($id);
 
         $response = $isDeleted ? response([], 200) : response('Key not found', HttpResponse::HTTP_GONE);
-        $path = $isDeleted ? (new FilePath($cached_file['file_path']))->getDir() : '/';
+        $path = $isDeleted ? FilePath::relative_path($cached_file['file_path']) : '/';
 
         // redirect
         return $this->responseOrRedirect($request, $response, $path);
