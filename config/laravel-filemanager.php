@@ -22,4 +22,8 @@ return [
             //'web'
         ],
     ],
+    'debug' => [
+        'disable_cleanup' => false,
+        'no_redirects' => false,
+    ]
 ];

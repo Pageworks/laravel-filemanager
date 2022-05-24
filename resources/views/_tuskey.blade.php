@@ -1,6 +1,6 @@
 <li class='file'>
 <span class='bar'>
-    <a class='label'>{{ $file['name'] }}</a>
+    <a class='label'>{{ $file['key'] }}</a>
     <span><a class='bttn expand-file'>Details</a></span>
 </span>
 <span class="expand">
