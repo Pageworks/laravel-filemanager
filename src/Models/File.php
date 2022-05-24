@@ -4,6 +4,7 @@ namespace Pageworks\LaravelFileManager\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Pageworks\LaravelFileManager\FilePath;
 
 class File extends Model
 {
@@ -24,5 +25,10 @@ class File extends Model
     // Polymorphic relationship to a "user" table.
     public function owner(){
         return $this->morphTo();
+    }
+
+    public function file_exists():bool {
+        $path = new FilePath($this->file_path);
+        return $path->isFile();
     }
 }

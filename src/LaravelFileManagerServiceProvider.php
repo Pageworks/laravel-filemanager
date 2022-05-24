@@ -18,9 +18,14 @@ class LaravelFileManagerServiceProvider extends ServiceProvider
     public function boot(): void
     {
 
+        // publish config file:
         $this->publishes([
             __DIR__.'/../config/laravel-filemanager.php' => config_path('laravel-filemanager.php'),
         ]);
+        // publish files in /public/
+        $this->publishes([
+            __DIR__.'/../public' => public_path('vendor/pageworks/laravel-filemanager'), 
+        ], 'public');
 
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'pageworks');
         
@@ -57,8 +62,8 @@ class LaravelFileManagerServiceProvider extends ServiceProvider
             $server = new TusServer('file');
             
             // default server endpoint:
-            if(config('laravel-filemanager.head.routes')) $server->setApiPath(config('laravel-filemanager.head.prefix', '/file-manager').'/tus');
-            else if(config('laravel-filemanager.api.routes')) $server->setApiPath(config('laravel-filemanager.api.prefix', '/api/v1/file-manager').'/tus');
+            $server->setApiPath(app('laravel-filemanager')->baseUrl().'/tus');
+            
             $server->setUploadDir(storage_path('app/public'));
 
             $server->event()->addListener('tus-server.upload.created', function(TusEvent $e){ event(new TusUploadStart($e)); });

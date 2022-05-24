@@ -10,16 +10,18 @@ if(config('laravel-filemanager.head.routes', true)){
     ], function($router) {
         
         // file browsing:
-
         Route::get('/browse', [FileManageController::class, 'browse']);
         Route::get('/download', [FileManageController::class, 'browse']);
-        Route::get('/add', [FileManageController::class, 'add']);
-        Route::get('/remove', [FileManageController::class, 'remove']);
         Route::get('/rename', [FileManageController::class, 'rename']);
         Route::get('/delete', [FileManageController::class, 'delete']);
         Route::get('/make', [FileManageController::class, 'newdir']);
 
-        // tus & uploads:
+        // model manipulation:
+        Route::get('/models', [FileManageController::class, 'models']);
+        Route::get('/add', [FileManageController::class, 'add']);
+        Route::get('/remove', [FileManageController::class, 'remove']);
+
+        // tus & uploads mgmt:
         Route::get('/uploads', [FileManageController::class, 'tusUploads']);
         Route::get('/uploads/remove/{id}', [FileManageController::class, 'tusRemove']);
         Route::match(['post','put','patch','delete'], "/tus/{key?}", [FileManageController::class, 'tusUpload']);

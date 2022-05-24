@@ -1,0 +1,169 @@
+.clear {
+    clear:both;
+    display:block;
+}
+.hidden {
+    display:none;
+}
+.box-browse {
+    border-radius:5px;
+    border:solid #ccc 1px;
+    background:#eee;
+    margin:50px 50px 15px;
+    box-shadow:1px 1px 10px rgba(0,0,0,.15);
+}
+.box-browse p {
+    border-top:1px solid #ccc;
+    padding:10px 20px;
+    margin:0;
+    font-style:italic;
+}
+.box-browse hgroup {
+    padding:20px;
+}
+.box-browse hgroup h1 {
+    font-size:125%;
+    font-weight:normal;
+    margin-bottom:5px;
+    margin:0;
+}
+.box-browse hgroup h2 {
+    font-size:80%;
+    font-weight:normal;
+    margin-top:5px;
+}
+a.bttn, button.bttn {
+    z-index:100;
+    background:#ccc;
+    padding:2px 5px;
+    border-radius:3px;
+    font-size:75%;
+    text-decoration:none;
+    border:1px solid rgba(0,0,0,.25);
+    white-space: nowrap;
+    margin:0 0 0 5px;
+    cursor:pointer;
+}
+a.bttn.right, button.bttn.right {
+    float:right;
+}
+a.bttn:hover {
+    border:1px solid #000;
+    background:#666;
+    color:#fff;
+    text-decoration:none;
+}
+ul.list-dirs, ul.list-files {
+    margin:0;
+    padding:0;
+    list-style:none;
+    overflow: hidden;
+}
+ul.list-dirs li, ul.list-files li {
+    border-top:1px solid #ccc;
+    padding:0;
+    margin:0;
+    clear:both;
+}
+ul.list-dirs li {
+    background:#eee;
+}
+ul.list-files li {
+    background:#ddd;
+}
+li .bar {
+    padding:0;
+    margin:0;
+    display:flex;
+}
+li .bar > * {
+    padding:10px 5px;
+}
+li .bar > *:last-child {
+    padding:10px 20px 10px 5px;
+}
+li .expand {
+    display:none;
+    border-top:solid 1px #999;
+    padding:20px;
+    background:#ddd;
+    box-shadow:0 1px 2px rgba(0,0,0,.3) inset;
+}
+li.show .expand {
+    display:flex;
+    flex-direction: column;
+}
+li .bar a.label {
+    padding:10px 20px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    flex-grow: 1;
+}
+a.label:hover {
+    color:#3333BB;
+    text-decoration: underline;
+}
+ul.list-dirs li:hover, ul.list-files li:hover {
+    background:#eee linear-gradient(to right, #eee 0%, #ddd 100%);
+}
+.meta, .model, .tuskeys {
+    flex-grow: 1;
+    min-width: 0;
+}
+span + .model, span + .tuskeys {
+    border-top:1px solid #999;
+    padding-top:20px;
+    margin-top:15px;
+}
+.meta .bttns,
+.model .bttns,
+.tuskeys .bttns {
+    float:right;
+}
+.keyvalue {
+    display: flex;
+    font-size:90%;
+    line-height: 175%;
+}
+.keyvalue *:first-child {
+    min-width:130px;
+    max-width:130px;
+    text-transform: uppercase;
+    font-size:75%;
+    text-align:right;
+    padding-right:15px;
+    font-weight:bold;
+    color:#333;
+}
+.keyvalue *:last-child {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    /*
+    direction: rtl;
+    text-align: left;
+    */
+}
+.uppy-dashboard {
+    width:600px;
+    margin:0 auto;
+}
+footer {
+    margin:0 50px;
+}
+footer ul {
+    margin:0;
+    padding:0;
+    list-style-type: none;
+}
+footer ul li {
+    float:right;
+    padding:0;
+    margin:0 20px 0 0;
+    font-size:75%;
+}
+footer ul li a {
+    color:#888;
+}

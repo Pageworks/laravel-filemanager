@@ -69,6 +69,33 @@ class FilePath
             $this->path_abs .= '/';
         }
     }
+    public static function getTusKeysByPath($path = false){
+
+        $cache = app('tus-server')->getCache();
+        $keys = $cache->keys();
+        
+        $files = [];
+
+        foreach($keys as $key){
+            $file = $cache->get($key, true);
+            if($path == false || FilePath::url_in_dir($file['file_path'], $path)){ //$this->getPathAbsolute())){
+
+                $file ['key'] = $key;
+                $files [$file['name']] = $file;
+            }
+        }
+        return $files;
+    }
+    public static function getOrphanedTusKeys($path = false){
+        
+        $results = FilePath::getTusKeysByPath($path);
+        foreach($results as $path => $file){
+            if( (new FilePath($path))->isFile()){
+                unset($results[$path]);
+            }
+        }
+        return $results;
+    }
     public function getListFiles(){
 
         if(!$this->isDir()){
@@ -81,17 +108,7 @@ class FilePath
         $models = $files_in_db->toArray();
 
         // search redis for files:
-        $cache = app('tus-server')->getCache();
-        $keys = $cache->keys();
-        $keys_in_dir = [];
-        $keys_files = [];
-        foreach($keys as $key){
-            $file = $cache->get($key, true);
-            if(FilePath::url_in_dir($file['file_path'], $this->getPathAbsolute())){
-                $keys_in_dir [$file['name']] = $key;
-                $keys_files[$key] = $file;
-            }
-        }
+        $keys_in_dir = FilePath::getTusKeysByPath($this->getPathAbsolute());
 
         // search the directory:
         $paths = [];
@@ -133,7 +150,6 @@ class FilePath
                 // look in list of keys:
                 if(array_key_exists($p, $keys_in_dir)){
                     $data['tus_key'] = $keys_in_dir[$p];
-                    unset($keys_files[$keys_in_dir[$p]]);
                     unset($keys_in_dir[$p]);
                 }
 
@@ -177,7 +193,7 @@ class FilePath
             'dirs' => $dirs,
             'files' => $files,
             'orphaned_models' => $models,
-            'orphaned_tuskeys' => $keys_files,
+            'orphaned_tuskeys' => $keys_in_dir,
         ];
     }
     public function getSize(){

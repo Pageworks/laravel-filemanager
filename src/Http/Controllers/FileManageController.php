@@ -22,17 +22,17 @@ class FileManageController extends BaseController {
         $this->repo = $repo;
     }
     protected function getConfiguredTusServer(Request $request){
-        $server = app('tus-server');
         
         // The server sends the client a URL endpoint:
         // either /file-manager/tus or /api/v1/file-manager/tus
         // Here we determine what endpoint to send to the client
-
+        
         // It seems silly to have two different endpoints, but
         // this gives us the most flexiblity w/ the config file.
-
-        $config_type = ($request->is('api/*')) ? 'api' : 'head';
-        $server->setApiPath(config("laravel-filemanager.{$config_type}.prefix", '/file-manager').'/tus'); // tus server endpoint
+        
+        $endpoint = app('laravel-filemanager')->baseUrl($request).'/tus';
+        $server = app('tus-server');
+        $server->setApiPath($endpoint);
         
         return $server;
     }
@@ -44,15 +44,15 @@ class FileManageController extends BaseController {
      * @param Response $response
      * @return void
      */
-    protected function responseOrView(Request $request, Response $response){
+    protected function responseOrView(Request $request, Response $response, string $view = 'laravel-filemanager::files'){
 
         // send JSON:
         if(!$request->acceptsHtml()) return $response;
 
         // send HTML view:
         $vals = $response->getOriginalContent();
-        $vals['baseUrl'] = config('laravel-filemanager.head.prefix', '/file-manager');
-        return view('laravel-filemanager::files', $vals);
+        $vals['baseUrl'] = app('laravel-filemanager')->baseUrl($request);
+        return view($view, $vals);
     }
     /**
      * If API request, a JSON response is sent. Otherwise, the user
@@ -82,6 +82,21 @@ class FileManageController extends BaseController {
         }
         $response = $this->repo->listItemsInDir($path);
         return $this->responseOrView($request, $response);
+    }
+    public function models(Request $request){
+        
+        $all = File::all();
+        $orphaned = [];
+        foreach($all as $file){
+            if(!$file->file_exists()) $orphaned []= $file->toArray();
+        }
+        $response = response([
+            'orphaned_models' => $orphaned,
+            'path' => '/',
+            'baseUrl' => app('laravel-filemanager')->baseUrl($request),
+        ], 200);
+
+        return $this->responseOrView($request, $response,'laravel-filemanager::models');
     }
     // adds a file to the database, only meta-data
     public function add(Request $request){
@@ -134,31 +149,12 @@ class FileManageController extends BaseController {
 
         return $this->responseOrRedirect($request, $response, $path->getDir());
     }
-    public function tusUploads(){
-        $cache = app('tus-server')->getCache();
-        $keys = $cache->keys();
-
-        echo "<h2>Files in tus cache:</h2>";
-
-        print('<pre>');
-        print_r($keys);
-        print('</pre>');
-
-        $baseUrl = config('laravel-filemanager.head.prefix', '/file-manager');
-
-        foreach($keys as $key){
-            $file = $cache->get($key, true);
-            echo "<div>";
-            echo "<p><b>{$key}</b></p>";
-            echo "<ul>";
-            echo "<li>{$file['name']}</li>";
-            echo "<li>{$file['file_path']}</li>";
-            echo "<li>{$file['metadata']['type']}</li>";
-            echo "<li><a href='{$baseUrl}/uploads/remove/{$key}'>Delete key</a></li>";
-            echo "<li><a href='{$baseUrl}/uploads/delete/{$key}'>Delete key AND file</a></li>";
-            echo "</ul>";
-            echo "</div>";
-        }
+    public function tusUploads(Request $request){
+        return view('laravel-filemanager::tuskeys', [
+            'baseUrl' => app('laravel-filemanager')->baseUrl($request),
+            'path' => '/',
+            'orphaned_tuskeys' => FilePath::getOrphanedTusKeys(),
+        ]);
     }
     public function tusUpload(Request $request){
 

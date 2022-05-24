@@ -16,10 +16,10 @@ return [
      * Settings for the web-based endpoints.
      */
     'head' => [
-        'routes' => false,
+        'routes' => true,
         'prefix' => '/file-manager',
         'middleware' => [
-            'web'
+            //'web'
         ],
     ],
 ];
