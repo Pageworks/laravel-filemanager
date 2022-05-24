@@ -211,12 +211,20 @@ class FilePath
         
         if(!$this->isFile()) return null;
 
-        return \Pageworks\LaravelFileManager\Models\File::create([
+        $attr = [
             'file_name' => $this->getFileName(),
             'file_path' => $this->getPathRelative(),
             'dir_path' => $this->getDir(),
             'size' => $this->getSize(),
-        ]);
+        ];
+
+        $user = auth()->user();
+
+        if($user){
+            return $user->files()->create($attr);
+        } else {
+            return \Pageworks\LaravelFileManager\Models\File::create($attr);
+        }
     }
     public function updateDB(){
         //$model = $this->getModel();

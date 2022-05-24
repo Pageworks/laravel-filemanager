@@ -109,15 +109,8 @@ class FileRepository implements FileRepositoryInterface {
     public function removeModel(File $file){
         if($file){
 
-            if(config('laravel-filemanager.debug.disable_cleanup', false)){
-            
-                // pretend to remove model
-                
-            } else {
-
-                // remove model for real
-                $file->delete();
-            }
+            // remove the model
+            $file->delete();
             
             return response([], 204);
 

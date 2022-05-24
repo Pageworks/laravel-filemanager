@@ -200,14 +200,8 @@ class FileManageController extends BaseController {
         // find key in cache
         $cached_file = $cache->get($id, true);
 
-        if(config('laravel-filemanager.debug.disable_cleanup', false)){
-            
-            // pretend to delete the key
-            $isDeleted = true;
-        } else {
-            // delete the key for real
-            $isDeleted = $cache->delete($id);
-        }
+        // delete the key
+        $isDeleted = $cache->delete($id);
 
         $response = $isDeleted ? response([], 200) : response('Key not found', HttpResponse::HTTP_GONE);
         $path = $isDeleted ? app('laravel-filemanager')->relative_path($cached_file['file_path']) : '/';

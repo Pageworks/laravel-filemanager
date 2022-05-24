@@ -20,7 +20,11 @@ class TusUploadComplete
     {
         $this->tusEvent = $tusEvent;
         $file = $this->tusEvent->getFile();
-        
+       
+        // can't delete the tus key yet
+        // the client will probably request it soon
+        // to verify that the upload completed successfully
+
         (new ConsoleOutput())->writeln("upload complete ========");
        
         $details = $file->details();
@@ -28,6 +32,7 @@ class TusUploadComplete
         $this->dumpToConsole($details);
 
         // make model in db:
+
         $path = new FilePath($file->getFilePath());
         $model = $path->addToDB();
         (new ConsoleOutput())->writeln("added to db, id: {$model->id}");
