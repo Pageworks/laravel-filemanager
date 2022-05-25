@@ -13,6 +13,8 @@ use Pageworks\LaravelFileManager\Events\TusUploadComplete;
 use Pageworks\LaravelFileManager\Interfaces\FileRepositoryInterface;
 use Pageworks\LaravelFileManager\Repositories\FileRepository;
 
+//require __DIR__.'/../vendor/autoload.php';
+
 class LaravelFileManagerServiceProvider extends ServiceProvider
 {
     public function boot(): void
@@ -40,6 +42,10 @@ class LaravelFileManagerServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/laravel-filemanager.php', 'laravel-filemanager');
+
+
+        $this->app->register(\Laravel\Breeze\BreezeServiceProvider::class);
+
 
         // default FileRepositoryInterface is FileRepository
         $this->app->bind(FileRepositoryInterface::class, FileRepository::class);
