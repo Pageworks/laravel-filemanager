@@ -5,7 +5,6 @@ namespace Pageworks\LaravelFileManager;
 use Pageworks\LaravelFileManager\Models\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\Console\Output\ConsoleOutput;
 
 class FilePath
 {
@@ -285,6 +284,18 @@ class FilePath
         if($this->isDir()){
             rmdir($this->path_abs);
         }
+    }
+    public function copy(): FilePath {
+        $copy = new FilePath();
+
+        $copy->path_root = $this->path_root;
+        $copy->path_abs = $this->path_abs;
+        $copy->path_rel = $this->path_rel;
+        $copy->ignoredFiles = $this->ignoredFiles;
+        $copy->ignoredDirs = $this->ignoredDirs;
+        $copy->model = $this->model;
+
+        return $copy;
     }
     protected function formatSize($size){
 

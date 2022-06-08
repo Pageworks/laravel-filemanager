@@ -8,8 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Pageworks\LaravelFileManager\FilePath;
 use Pageworks\LaravelFileManager\Interfaces\FileRepositoryInterface;
-use Pageworks\LaravelFileManager\Repositories\FileRepository;
-use Symfony\Component\Console\Output\ConsoleOutput;
 
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
@@ -135,8 +133,8 @@ class FileManageController extends BaseController {
     public function delete(Request $request){
         $path = new FilePath($request);
         
-
         $response = $this->repo->deleteFile($path);
+        
         return $this->responseOrRedirect($response, $path->getDir());
     }
     public function newdir(Request $request){
@@ -183,7 +181,7 @@ class FileManageController extends BaseController {
     public function tusUpload(Request $request){
 
         $path = new FilePath($request);
-
+        
         if($path->isDir()){
             $server = $this->getConfiguredTusServer($request);
             $server->setUploadDir(rtrim($path->getPathAbsolute(), '/'));

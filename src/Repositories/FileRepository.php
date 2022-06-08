@@ -6,7 +6,13 @@ use Illuminate\Http\Response;
 use Pageworks\LaravelFileManager\FilePath;
 use Pageworks\LaravelFileManager\Interfaces\FileRepositoryInterface;
 use Pageworks\LaravelFileManager\Models\File;
-use Symfony\Component\Console\Output\ConsoleOutput;
+use Pageworks\LaravelFileManager\Events\DirectoryCreated;
+use Pageworks\LaravelFileManager\Events\DirectoryDeleted;
+use Pageworks\LaravelFileManager\Events\DirectoryRenamed;
+use Pageworks\LaravelFileManager\Events\FileDeleted;
+use Pageworks\LaravelFileManager\Events\FileModelAdded;
+use Pageworks\LaravelFileManager\Events\FileModelRemoved;
+use Pageworks\LaravelFileManager\Events\FileRenamed;
 
 class FileRepository implements FileRepositoryInterface {
 
@@ -38,21 +44,26 @@ class FileRepository implements FileRepositoryInterface {
         
         if(is_dir($dir) || is_file($dir)) return response(['error' => 'file exists'], 403);
 
-        (new ConsoleOutput())->writeln("attempting to make dir: ".$dir);
-
         if(mkdir($dir)){
+            event(new DirectoryCreated(new FilePath($dir)));
             return response([], 200);
         }
         return response(['error' => 'something bogus happened'], 403);
     }
     public function rename(FilePath $dir_path, string $name){
-        if($dir_path->isFile() || $dir_path->isDir()){
+
+        $isDir = $dir_path->isDir();
+        if($dir_path->isFile() || $isDir){
 
             if($dir_path->isAtRoot() || $dir_path->isOutsideRoot()) return response(['error' => 'not allowed'], 401);
 
-            $dir_path->rename($name);
-            
-            return response([], 200);
+            $old_path = $dir_path->copy();
+
+            if($dir_path->rename($name)){
+                event( $isDir ? new DirectoryRenamed($old_path, $dir_path) : new FileRenamed($old_path, $dir_path));
+                return response([], 200);
+            } 
+            return response(['error' => 'file could not be renamed'], 409);
         }
         return response(['error' => 'file not found'], 404);
     }
@@ -68,6 +79,7 @@ class FileRepository implements FileRepositoryInterface {
         if($file_path->isAtRoot() || $file_path->isOutsideRoot()) return response(['error' => 'not allowed'], 401);
         if($file_path->isFile()){
             $file_path->delete();
+            event(new FileDeleted($file_path));
             return response([], 204);
         } 
         else if($file_path->isDir()){
@@ -87,6 +99,8 @@ class FileRepository implements FileRepositoryInterface {
             }
 
             $file_path->delete();
+            event(new DirectoryDeleted($file_path));
+
             return response([], 204);
         } 
         else {
@@ -101,6 +115,8 @@ class FileRepository implements FileRepositoryInterface {
 
             $file = $file_path->addToDB();
 
+            event(new FileModelAdded($file_path));
+
             return response([], 200);
         } else {
             return response([], 404);
@@ -109,9 +125,13 @@ class FileRepository implements FileRepositoryInterface {
     public function removeModel(File $file){
         if($file){
 
+            $path = new FilePath($file->file_path);
+
             // remove the model
             $file->delete();
-            
+
+            event(new FileModelRemoved($path));
+
             return response([], 204);
 
         } else {

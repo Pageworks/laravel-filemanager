@@ -5,6 +5,7 @@ namespace Pageworks\LaravelFileManager\Events;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Pageworks\LaravelFileManager\Events\FileUploaded;
 use Pageworks\LaravelFileManager\FilePath;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use TusPhp\Events\TusEvent;
@@ -25,7 +26,7 @@ class TusUploadComplete
         // the client will probably request it soon
         // to verify that the upload completed successfully
 
-        (new ConsoleOutput())->writeln("upload complete ========");
+        (new ConsoleOutput())->writeln("== TUS upload complete ========");
        
         $details = $file->details();
         (new ConsoleOutput())->writeln("tusEvent->file->details() info:");
@@ -36,6 +37,8 @@ class TusUploadComplete
         $path = new FilePath($file->getFilePath());
         $model = $path->addToDB();
         (new ConsoleOutput())->writeln("added to db, id: {$model->id}");
+
+        event(new FileUploaded($path));
 
     }
     protected function dumpToConsole(array $arr, int $depth = 1){

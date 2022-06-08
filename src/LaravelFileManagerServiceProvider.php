@@ -2,16 +2,26 @@
 
 namespace Pageworks\LaravelFileManager;
 
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use TusPhp\Tus\Server as TusServer;
 use TusPhp\Events\TusEvent;
 
+use Pageworks\LaravelFileManager\Events\DirectoryDeleted;
+use Pageworks\LaravelFileManager\Events\DirectoryRenamed;
+use Pageworks\LaravelFileManager\Events\FileDeleted;
+use Pageworks\LaravelFileManager\Events\FileModelAdded;
+use Pageworks\LaravelFileManager\Events\FileModelRemoved;
+use Pageworks\LaravelFileManager\Events\FileRenamed;
+use Pageworks\LaravelFileManager\Events\DirectoryCreated;
+use Pageworks\LaravelFileManager\Events\FileUploaded;
 use Pageworks\LaravelFileManager\Events\TusUploadStart;
 use Pageworks\LaravelFileManager\Events\TusUploadProgress;
 use Pageworks\LaravelFileManager\Events\TusUploadMerged;
 use Pageworks\LaravelFileManager\Events\TusUploadComplete;
 use Pageworks\LaravelFileManager\Interfaces\FileRepositoryInterface;
 use Pageworks\LaravelFileManager\Repositories\FileRepository;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 //require __DIR__.'/../vendor/autoload.php';
 
@@ -30,10 +40,11 @@ class LaravelFileManagerServiceProvider extends ServiceProvider
         ], 'public');
 
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'pageworks');
-        
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'laravel-filemanager');
         $this->loadRoutesFrom(__DIR__.'/routes.php');
+
+        $this->addEventListeners();
 
         if ($this->app->runningInConsole()) {
             $this->bootForConsole();
@@ -42,9 +53,6 @@ class LaravelFileManagerServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/laravel-filemanager.php', 'laravel-filemanager');
-
-
-        $this->app->register(\Laravel\Breeze\BreezeServiceProvider::class);
 
 
         // default FileRepositoryInterface is FileRepository
@@ -66,10 +74,7 @@ class LaravelFileManagerServiceProvider extends ServiceProvider
         $this->app->singleton('tus-server', function ($app) {
             
             $server = new TusServer('file');
-            
-            // default server endpoint:
             $server->setApiPath(app('laravel-filemanager')->baseUrl().'/tus');
-            
             $server->setUploadDir(storage_path('app/public'));
 
             $server->event()->addListener('tus-server.upload.created', function(TusEvent $e){ event(new TusUploadStart($e)); });
@@ -120,5 +125,15 @@ class LaravelFileManagerServiceProvider extends ServiceProvider
 
         // Registering package commands.
         // $this->commands([]);
+    }
+    protected function addEventListeners(){
+        Event::listen(function(DirectoryCreated $event){(new ConsoleOutput())->writeln("==> event: directory created: {$event->path->getPathRelative()}");});
+        Event::listen(function(DirectoryDeleted $event){(new ConsoleOutput())->writeln("==> event: directory deleted: {$event->path->getPathRelative()}");});
+        Event::listen(function(DirectoryRenamed $event){(new ConsoleOutput())->writeln("==> event: directory renamed: {$event->path_from->getPathRelative()} to {$event->path_to->getPathRelative()}");});
+        Event::listen(function(FileDeleted $event){(new ConsoleOutput())->writeln("==> event: file deleted: {$event->path->getPathRelative()}");});
+        Event::listen(function(FileModelAdded $event){(new ConsoleOutput())->writeln("==> event: file model added: {$event->path->getPathRelative()}");});
+        Event::listen(function(FileModelRemoved $event){(new ConsoleOutput())->writeln("==> event: file model removed: {$event->path->getPathRelative()}");});
+        Event::listen(function(FileRenamed $event){(new ConsoleOutput())->writeln("==> event: file renamed: {$event->path_from->getPathRelative()} to {$event->path_to->getPathRelative()}");});
+        Event::listen(function(FileUploaded $event){(new ConsoleOutput())->writeln("==> event: file uploaded: {$event->path->getPathRelative()}");});
     }
 }
