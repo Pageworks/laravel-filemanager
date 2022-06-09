@@ -168,15 +168,16 @@ class FileManageController extends BaseController {
         $lfm = app('laravel-filemanager');
 
         $keys_found = 0;
-
         $keys_found = count(app('tus-server')->getCache()->keys());
 
-        return view('laravel-filemanager::tuskeys', [
+        $response = response([
             'baseUrl' => $lfm->baseUrl($request),
             'path' => '/',
             'orphaned_tuskeys' => $lfm->getOrphanedTusKeys(),
             'total_keys' => $keys_found,
-        ]);
+        ], 200);
+
+        return $this->responseOrView($response, 'laravel-filemanager::tuskeys');
     }
     public function tusUpload(Request $request){
 
@@ -185,11 +186,36 @@ class FileManageController extends BaseController {
         if($path->isDir()){
             $server = $this->getConfiguredTusServer($request);
             $server->setUploadDir(rtrim($path->getPathAbsolute(), '/'));
-            $server->serve()->send();
+            $server->serve()->send();            
         }
     }
-    public function tusDownload(Request $request){
-        return $this->getConfiguredTusServer($request)->serve()->send();
+    public function tusDownload(Request $request, $key){
+        $server = $this->getConfiguredTusServer($request);
+        $response = $server->serve()->send();
+
+        // if key found:
+        if($response->getStatusCode() == 200){
+
+            // lookup model, inject into results:
+            
+            // get the tus cache
+            $cache = $server->getCache();
+
+            // find key in cache
+            $cached_file = $cache->get($key, true);
+            
+            // lookup model in db:
+            $model = (new FilePath($cached_file['file_path']))->getModel();
+
+            // copy headers out of original response
+            $headers = []; 
+            foreach($response->headers->all() as $header=>$val) {
+                $headers[$header] = $val[0];
+            }
+            // build new resonse with model:
+            return response()->json(['file'=>$model])->withHeaders($headers);
+        }
+        return $response;
     }
     public function tusRemove(Request $request, $id){
         // get the tus cache

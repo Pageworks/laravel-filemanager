@@ -6,7 +6,7 @@ return [
      */
     'api' => [
         'routes' => true,
-        'prefix' => '/api/v1/file-manager',
+        'prefix' => '/api/v1',
         'middleware' => [
             'api'
         ],
