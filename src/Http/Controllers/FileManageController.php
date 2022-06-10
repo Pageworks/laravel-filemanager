@@ -191,7 +191,7 @@ class FileManageController extends BaseController {
     }
     public function tusDownload(Request $request, $key){
         $server = $this->getConfiguredTusServer($request);
-        $response = $server->serve()->send();
+        $response = $server->serve();
 
         // if key found:
         if($response->getStatusCode() == 200){
@@ -208,12 +208,16 @@ class FileManageController extends BaseController {
             $model = (new FilePath($cached_file['file_path']))->getModel();
 
             // copy headers out of original response
-            $headers = []; 
-            foreach($response->headers->all() as $header=>$val) {
-                $headers[$header] = $val[0];
-            }
+            //$headers = []; 
+            //foreach($response->headers->all() as $header=>$val) {
+            //    $headers[$header] = $val[0];
+            //}
             // build new resonse with model:
-            return response()->json(['file'=>$model])->withHeaders($headers);
+            //return response()->json(['file'=>$model])->withHeaders($headers);
+
+            $json = json_encode($model);
+
+            $response->setContent("{'file' => {$json}}");
         }
         return $response;
     }
