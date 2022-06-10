@@ -216,7 +216,7 @@ class FileManageController extends BaseController {
             //return response()->json(['file'=>$model])->withHeaders($headers);
 
             $json = json_encode($model);
-
+            $response->headers->set('Content-Type', 'application/json');
             $response->setContent("{'file' => {$json}}");
         }
         return $response;
