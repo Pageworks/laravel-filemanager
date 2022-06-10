@@ -50,6 +50,7 @@ class FileManageController extends BaseController {
 
         // send HTML view:
         $vals = $response->getOriginalContent();
+        print_r($vals); exit;
         $vals['baseUrl'] = app('laravel-filemanager')->baseUrl($request);
         return view($view, $vals);
     }
@@ -215,9 +216,8 @@ class FileManageController extends BaseController {
             // build new resonse with model:
             //return response()->json(['file'=>$model])->withHeaders($headers);
 
-            $json = json_encode($model);
+            $response->setContent(json_encode(['file' => $model]));
             $response->headers->set('Content-Type', 'application/json');
-            $response->setContent("{'file' => {$json}}");
         }
         return $response;
     }
