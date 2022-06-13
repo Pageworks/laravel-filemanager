@@ -15,6 +15,7 @@ class File extends Model
         'file_path',
         'dir_path',
         'size',
+        'tuskey',
     ];
 
     // what factory class to use

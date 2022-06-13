@@ -20,7 +20,7 @@ $subtitle = "{$n2} ".($n2 != 1 ? "keys" : "key")." total";
     </hgroup>
     @if (count($orphaned_tuskeys) > 0)
     <ul class='list-files'>
-        @foreach($orphaned_tuskeys as $path => $file)
+        @foreach($orphaned_tuskeys as $orphan_tuskey)
         @include('laravel-filemanager::_tuskey')
         @endforeach
     </ul>

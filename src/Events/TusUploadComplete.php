@@ -35,8 +35,8 @@ class TusUploadComplete
         // make model in db:
 
         $path = new FilePath($file->getFilePath());
-        $model = $path->addToDB();
-        (new ConsoleOutput())->writeln("added to db, id: {$model->id}");
+        $model = $path->addToDB("tus:server:{$file->getKey()}");
+        (new ConsoleOutput())->writeln("added to db, id: {$model->id} key: {$model->tuskey}");
 
         event(new FileUploaded($path));
 

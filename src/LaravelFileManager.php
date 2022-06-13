@@ -3,6 +3,7 @@
 namespace Pageworks\LaravelFileManager;
 
 use Illuminate\Http\Request;
+use Pageworks\LaravelFileManager\Models\File;
 
 class LaravelFileManager
 {
@@ -25,34 +26,39 @@ class LaravelFileManager
     // returns a list of tus keys, optionally filtered by path
     public function getTusKeysByPath($path = false){
 
+        // get all tuskeys:
         $cache = app('tus-server')->getCache();
         $keys = $cache->keys();
         
-        $files = [];
-
+        // filter to only include keys matching a specific path:
+        $results = [];
         foreach($keys as $key){
             $file = $cache->get($key, true);
             if($path == false || $this->url_in_dir($file['file_path'], $path)){ //$this->getPathAbsolute())){
 
                 $file ['key'] = $key;
-                $files [$file['file_path']] = $file;
-            }
-        }
-        return $files;
-    }
-    // returns a list of keys that don't have matching files
-    public function getOrphanedTusKeys($path = false){
-        
-        $keys = $this->getTusKeysByPath($path);
-        $results = [];
-        foreach($keys as $path => $key){
-            if( (new FilePath($path))->isFile() == false){
-                // this file is missing
-                // add it to the list of missing files:
-                $results []= $key;
+                $file_path = $file['file_path'];
+                //if(!array_key_exists($file_path, $results)) $results[$file_path] = [];
+                //$results [$file_path] []= $file;
+                $results [$key]= $file;
             }
         }
         return $results;
+    }
+    // returns a list of keys that don't have matching DB records:
+    public function getOrphanedTusKeys($path = false){
+        
+        // find all keys in path
+        $keys = $this->getTusKeysByPath($path);
+        $only_keys = collect($keys)->pluck('key')->flatten()->toArray();
+
+        // remove fetched rows:
+        $rows = File::select()->whereIn('tuskey', $only_keys)->get();
+        foreach($rows as $row){
+            unset($keys[$row->tuskey]);
+        }
+
+        return $keys;
     }
 
     // returns true

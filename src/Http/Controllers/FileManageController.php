@@ -50,8 +50,8 @@ class FileManageController extends BaseController {
 
         // send HTML view:
         $vals = $response->getOriginalContent();
-        print_r($vals); exit;
         $vals['baseUrl'] = app('laravel-filemanager')->baseUrl($request);
+
         return view($view, $vals);
     }
 
@@ -94,6 +94,7 @@ class FileManageController extends BaseController {
             return $this->repo->downloadFile($path);
         }
         $response = $this->repo->listItemsInDir($path);
+
         return $this->responseOrView($response,'laravel-filemanager::files');
     }
     public function models(Request $request){
@@ -187,7 +188,9 @@ class FileManageController extends BaseController {
         if($path->isDir()){
             $server = $this->getConfiguredTusServer($request);
             $server->setUploadDir(rtrim($path->getPathAbsolute(), '/'));
-            $server->serve()->send();            
+            $response = $server->serve();
+            
+            return $response;
         }
     }
     public function tusDownload(Request $request, $key){
@@ -199,11 +202,8 @@ class FileManageController extends BaseController {
 
             // lookup model, inject into results:
             
-            // get the tus cache
-            $cache = $server->getCache();
-
-            // find key in cache
-            $cached_file = $cache->get($key, true);
+            // find key in the tus cache
+            $cached_file = $server->getCache()->get($key, true);
             
             // lookup model in db:
             $model = (new FilePath($cached_file['file_path']))->getModel();
@@ -227,12 +227,13 @@ class FileManageController extends BaseController {
 
         // find key in cache
         $cached_file = $cache->get($id, true);
+        $path_to_file = $cached_file['file_path'];
 
         // delete the key
         $isDeleted = $cache->delete($id);
 
         $response = $isDeleted ? response([], 200) : response('Key not found', HttpResponse::HTTP_GONE);
-        $path = $isDeleted ? app('laravel-filemanager')->relative_path($cached_file['file_path']) : '/';
+        $path = $isDeleted ? app('laravel-filemanager')->relative_path($path_to_file) : '/';
 
         // redirect
         return $this->responseOrRedirect($response, $path);

@@ -8,7 +8,10 @@ return [
         'routes' => true,
         'prefix' => '/api/v1',
         'middleware' => [
-            'api'
+            'api',
+        ],
+        'middleware_tus' => [
+            'api',
         ],
         'view' => true,
     ],
@@ -19,7 +22,10 @@ return [
         'routes' => true,
         'prefix' => '/file-manager',
         'middleware' => [
-            //'web'
+            'web',
+        ],
+        'middleware_tus' => [
+            'web',
         ],
     ],
     'debug' => [

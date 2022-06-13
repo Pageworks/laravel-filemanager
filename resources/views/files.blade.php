@@ -98,7 +98,7 @@
                     <h1>Orphaned models</h1>
                 </hgroup>
                 <ul class='list-files'>
-                    @foreach($list['orphaned_models'] as $model)
+                    @foreach($list['orphaned_models'] as $orphan_model)
                         @include('laravel-filemanager::_model')
                     @endforeach
                 </ul>
@@ -110,7 +110,7 @@
                     <h1>Orphaned tus-keys</h1>
                 </hgroup>
                 <ul class='list-files'>
-                    @foreach($list['orphaned_tuskeys'] as $path => $file)
+                    @foreach($list['orphaned_tuskeys'] as $orphan_tuskey)
                         @include('laravel-filemanager::_tuskey')
                     @endforeach
                 </ul>

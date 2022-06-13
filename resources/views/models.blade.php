@@ -20,7 +20,7 @@ $subtitle = "{$n2} ".($n2 != 1 ? "models" : "model")." total";
     </hgroup>
     @if ($n > 0)
     <ul class='list-files'>
-        @foreach($orphaned_models as $path => $model)
+        @foreach($orphaned_models as $orphan_model)
         @include('laravel-filemanager::_model')
         @endforeach
     </ul>

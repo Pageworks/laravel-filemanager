@@ -101,17 +101,6 @@ class FilePath
                     'ctime' => $stats['ctime'],
                 ];
 
-                // keys are indexed by path
-                if(array_key_exists($fullpath, $keys_in_dir)){
-                    
-                    // insert data into output
-                    $data['tus_key'] = $keys_in_dir[$fullpath];
-                    
-                    // this file exists for this key,
-                    // so remove it from the list of orphaned keys
-                    unset($orphaned_keys[$fullpath]);
-                }
-
                 // look in db collection using the file path:
                 $file_model = null;
                 foreach($models as $i => $m){
@@ -120,6 +109,20 @@ class FilePath
                         $data['model'] = $m;
                         unset($models[$i]);
                         break;
+                    }
+                }
+                if($file_model){
+
+                    $the_key = $file_model['tuskey'];
+
+                    if(array_key_exists($the_key, $keys_in_dir)){
+                        
+                        // insert data into output
+                        $data['tus_key'] = $keys_in_dir[$the_key];
+                        
+                        // this file exists for this key,
+                        // so remove it from the list of orphaned keys
+                        unset($orphaned_keys[$the_key]);
                     }
                 }
 
@@ -152,7 +155,7 @@ class FilePath
             'dirs' => $dirs,
             'files' => $files,
             'orphaned_models' => $models,
-            'orphaned_tuskeys' => $orphaned_keys,
+            'orphaned_tuskeys' => array_values($orphaned_keys),
         ];
     }
     public function findTusKey(){
@@ -206,7 +209,7 @@ class FilePath
         $this->model = \Pageworks\LaravelFileManager\Models\File::where('file_path','=',$this->getPathRelative())->first();
         return $this->model;
     }
-    public function addToDB(){
+    public function addToDB($tus = null){
         
         if(!$this->isFile()) return null;
 
@@ -216,6 +219,7 @@ class FilePath
             'dir_path' => $this->getDir(),
             'size' => $this->getSize(),
         ];
+        if(is_string($tus)) $attr['tuskey'] = $tus;
 
         $user = auth()->user();
 
