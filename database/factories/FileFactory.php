@@ -15,6 +15,7 @@ class FileFactory extends Factory
     {
         return [
             'file_path' => $this->faker->name(),
+            'tuskey' => $this->faker->creditCardNumber(),
         ];
     }
 }
