@@ -10,7 +10,9 @@ use Pageworks\LaravelFileManager\FilePath;
 use Pageworks\LaravelFileManager\Interfaces\FileRepositoryInterface;
 
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
-
+/**
+ * @group File Endpoints
+ */
 class FileManageController extends BaseController {
     
     private FileRepositoryInterface $repo;
@@ -86,7 +88,9 @@ class FileManageController extends BaseController {
         return redirect("{$prefix}{$endpoint}?path={$path}");
     }
 
-    // shows files and folders within a directory
+    /**
+     * Fetch directory contents
+     */
     public function browse(Request $request)
     {
         $path = new FilePath($request);
@@ -97,6 +101,9 @@ class FileManageController extends BaseController {
 
         return $this->responseOrView($response,'laravel-filemanager::files');
     }
+    /**
+     * Fetch files in DB
+     */
     public function models(Request $request){
         
         $all = File::all();
@@ -113,7 +120,11 @@ class FileManageController extends BaseController {
 
         return $this->responseOrView($response,'laravel-filemanager::models');
     }
-    // adds a file to the database, only meta-data
+    /**
+     * Add a file to DB
+     * 
+     * A record is added to the DB. This does NOT upload or otherwise create an actual file.
+     */
     public function add(Request $request){
         $path = new FilePath($request);
         
@@ -121,7 +132,11 @@ class FileManageController extends BaseController {
 
         return $this->responseOrRedirect($response);
     }
-    // removes a file from the database, does not delete the file
+    /**
+     * Remove a file from DB
+     * 
+     * A record is deleted. This does NOT delete an actual file.
+     */
     public function remove(Request $request){
 
         $path = new FilePath($request);
@@ -132,6 +147,11 @@ class FileManageController extends BaseController {
         $path = $file ? $file->dir_path : '/';
         return $this->responseOrRedirect($response, $path);
     }
+    /**
+     * Delete a file
+     * 
+     * If the file has a tus key or a record in the DB, both are deleted.
+     */
     public function delete(Request $request){
         $path = new FilePath($request);
         
@@ -139,6 +159,9 @@ class FileManageController extends BaseController {
         
         return $this->responseOrRedirect($response, $path->getDir());
     }
+    /**
+     * Create a directory
+     */
     public function newdir(Request $request){
         
         $path = new FilePath($request);
@@ -149,12 +172,14 @@ class FileManageController extends BaseController {
         
         return $this->responseOrRedirect($response, $path->getPathRelative());
     }
-    // renames a resource
-    // $path->rename() is called
-    // if the resource is a directory and there are files within,
-    // those files SHOULD have any related models updated
-    // HOWEVER they are not currently updated...
-    // this will result in orphaned rows
+    /**
+     * Rename a file / dir
+     * 
+     * $path->rename() is called
+     * If the resource is a directory and there are files within,
+     * those files SHOULD have any related models updated, but they
+     * do not at this time which results in orphaned rows.
+     */
     public function rename(Request $request){
 
         $path = new FilePath($request);
@@ -165,6 +190,9 @@ class FileManageController extends BaseController {
 
         return $this->responseOrRedirect($response, $path->getDir());
     }
+    /**
+     * Fetch tus uploads
+     */
     public function tusUploads(Request $request){
 
         $lfm = app('laravel-filemanager');
@@ -181,6 +209,9 @@ class FileManageController extends BaseController {
 
         return $this->responseOrView($response, 'laravel-filemanager::tuskeys');
     }
+    /**
+     * Connect to tus server
+     */
     public function tusUpload(Request $request){
 
         $path = new FilePath($request);
@@ -193,6 +224,9 @@ class FileManageController extends BaseController {
             return $response;
         }
     }
+    /**
+     * Download a file vis tus
+     */
     public function tusDownload(Request $request, $key){
         $server = $this->getConfiguredTusServer($request);
         $response = $server->serve();
@@ -221,6 +255,11 @@ class FileManageController extends BaseController {
         }
         return $response;
     }
+    /**
+     * Delete tus key
+     * 
+     * This removes the tus upload key from the file (or redis) cache. The file is NOT deleted.
+     */
     public function tusRemove(Request $request, $id){
         // get the tus cache
         $cache = $this->getConfiguredTusServer($request)->getCache();
