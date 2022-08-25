@@ -175,7 +175,6 @@ class FileManageController extends BaseController {
     /**
      * Rename a file / dir
      * 
-     * $path->rename() is called
      * If the resource is a directory and there are files within,
      * those files SHOULD have any related models updated, but they
      * do not at this time which results in orphaned rows.
@@ -210,7 +209,9 @@ class FileManageController extends BaseController {
         return $this->responseOrView($response, 'laravel-filemanager::tuskeys');
     }
     /**
-     * Connect to tus server
+     * Upload a file via tus
+     * 
+     * Launches a tus server and allows user to connect to it.
      */
     public function tusUpload(Request $request){
 
@@ -225,7 +226,9 @@ class FileManageController extends BaseController {
         }
     }
     /**
-     * Download a file vis tus
+     * Download a file via tus
+     * 
+     * This is provided to support existing front-end solutions
      */
     public function tusDownload(Request $request, $key){
         $server = $this->getConfiguredTusServer($request);
